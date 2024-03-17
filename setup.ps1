@@ -31,6 +31,14 @@ function Write-HostAndPopup {
 # This needs to happen first manually. Allow Administrator to run scripts
 # Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
+# Windows tweaks: disable Netbios - this will only disable Netbios on adapters that are currently up
+# TODO: spawn a script on network adapter change to kill netbios
+(Get-WmiObject Win32_NetworkAdapterConfiguration -Filter IpEnabled="true").SetTcpipNetbios(2)
+
+# Windows tweaks: disable Link-Local Multicast Name Resolution (LLMNR) which forces use of a DNS server
+New-Item "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT" -Name DNSClient -Force
+New-ItemProperty "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" -Name EnableMultiCast -Value 0 -PropertyType DWORD  -Force
+
 # Scaffolding: initialize Script Host shell object for diag popups
 $wshell = New-Object -ComObject Wscript.Shell
 # if not running elevated, fail
@@ -55,6 +63,7 @@ if (!(Get-BoolIsInstalled("scoop"))) {
 Write-Host("+++ Beginning installation of Windows Store apps. Expect installer prompts +++")
 # Group - System utilities and common nice-to-haves
 # Spotify music player
+Write-Host("+++ Installing Spotify. Expect failure[29] if the application is already installed +++")
 winget install Spotify.Spotify
 # Bitwarden password manager
 winget install Bitwarden.Bitwarden
@@ -99,7 +108,6 @@ scoop install sudo
 scoop install python ruby go perl nodejs
 scoop install java/openjdk
 scoop install curl grep sed less touch
-scoop install extras/visualc
 # -- null --
 
 # Install Windows Subsystem for Linux with Debian instead of default Ubuntu
