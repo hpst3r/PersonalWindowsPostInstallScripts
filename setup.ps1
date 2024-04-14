@@ -11,6 +11,8 @@
 
         [Boolean]$install_debian = 1
 
+[Boolean]$install_adk = 1
+
 [Boolean]$install_devtools = 1 # this grabs Scoop, the winget_devtools list, and WSL
 
     [Boolean]$install_scoop = 1
@@ -110,6 +112,17 @@ function Add-ScoopBucketRange {
 
 }
 
+# not working as far as I know
+function Install-Adk {
+
+    [String]$AdkPath = Convert-Path "~\Downloads\adksetup.exe"
+
+    Invoke-WebRequest -uri "https://go.microsoft.com/fwlink/?linkid=2243390" -outfile $AdkPath
+
+    & $AdkPath /quiet /installpath C:\ADK /features +
+
+}
+
 # Scaffolding: initialize Script Host shell object for diag popups
 $wshell = New-Object -ComObject Wscript.Shell
 # if not running elevated, fail
@@ -137,6 +150,8 @@ if ($enable_hyperv) {
     Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All -IncludeManagementTools
 
 }
+
+if ($install_adk) { Install-Adk }
 
 # Scaffolding: install the Scoop package manager if it is not already present
 if ($install_scoop -and $install_devtools) {
