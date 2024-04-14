@@ -1,5 +1,5 @@
 # This needs to happen first manually. Allow Administrator to run scripts
-# Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+# Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser
 
 # https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install
 
@@ -10,10 +10,6 @@
     [Boolean]$install_wsl = 1
 
         [Boolean]$install_debian = 1
-
-[Boolean]$install_deployment_tools = 1 # ADK + PE
-    
-    [Boolean] $install_pe = 1
 
 [Boolean]$install_devtools = 1 # this grabs Scoop, the winget_devtools list, and WSL
 
@@ -33,7 +29,7 @@
     [Array]$winget_dependencies = @("Microsoft.VCRedist.2015+.x64", "Microsoft.VCRedist.2015+.x86")
 
     [Boolean]$install_winget_niceties = 1
-    [Array]$winget_niceties = @("Spotify.Spotify", "Mozilla.Firefox.DeveloperEdition", "SyncTrayzor.SyncTrayzor")
+    [Array]$winget_niceties = @("Spotify.Spotify", "Mozilla.Firefox.DeveloperEdition", "SyncTrayzor.SyncTrayzor", "Microsoft.PowerToys")
 
     [Boolean]$install_winget_utilities = 1
     [Array]$winget_utilities = @("7zip.7zip", "REALiX.HWiNFO", "Bitwarden.Bitwarden", "Nlitesoft.Nlite")
