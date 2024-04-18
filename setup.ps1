@@ -1,5 +1,7 @@
 # This needs to happen first manually. Allow Administrator to run scripts
 # Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser
+# Install or update Winget first!
+# https://apps.microsoft.com/detail/9nblggh4nns1?rtc=1&hl=en-us&gl=US#activetab=pivot:overviewtab
 
 # https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install
 
