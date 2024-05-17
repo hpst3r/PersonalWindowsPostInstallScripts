@@ -52,16 +52,6 @@ function Get-BoolRunningAsAdministrator {
     return [bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544")
 }
 
-function Get-BoolIsInstalled {
-
-    [CmdletBinding()]
-    param (
-        [string]$program
-    )
-
-    return [bool](Get-Command $program)
-}
-
 # given a string message, write to host and a basic Script Host popup
 function Write-HostAndPopup {
 
@@ -160,7 +150,7 @@ if ($install_scoop -and $install_devtools) {
 
     Write-Host("+++ pre-install for Scoop - check if software exists +++")
 
-    if (!(Get-BoolIsInstalled("scoop"))) {
+    if (![bool](Get-Command scoop)) {
 
         Write-Host("+++ Scoop not found. Installing the Scoop package manager +++")
         Invoke-Expression "& {$(Invoke-RestMethod get.scoop.sh)} -RunAsAdmin" -ErrorVariable ScoopErrVar -ErrorAction Inquire
