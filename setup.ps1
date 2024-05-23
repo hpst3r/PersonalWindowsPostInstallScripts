@@ -42,7 +42,7 @@
     [Array]$winget_extras = @("valinet.ExplorerPatcher")
 
     [Boolean]$install_winget_devtools = 1
-    [Array]$winget_devtools = @("Git.Git", "GitHub.cli", "Microsoft.VisualStudioCode", "Microsoft.VisualStudioCode.CLI")
+    [Array]$winget_devtools = @("Git.Git", "GitHub.cli", "Microsoft.VisualStudioCode", "Microsoft.VisualStudioCode.CLI", "Microsoft.PowerShell")
 
     [Boolean]$install_winget_networking = 1
     [Array]$winget_networking = @("Insecure.Npcap", "WiresharkFoundation.Wireshark", "PuTTY.PuTTY")
