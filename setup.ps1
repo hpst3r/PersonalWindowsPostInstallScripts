@@ -13,7 +13,7 @@
 
         [Boolean]$install_debian = 1
 
-[Boolean]$install_adk = 1
+[Boolean]$install_adk = 0
 
 [Boolean]$install_devtools = 1 # this grabs Scoop, the winget_devtools list, and WSL
 
