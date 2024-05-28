@@ -3,6 +3,7 @@
 # Install or update Winget first!
 # https://apps.microsoft.com/detail/9nblggh4nns1?rtc=1&hl=en-us&gl=US#activetab=pivot:overviewtab
 
+# Assessment and Deployment Toolkit
 # https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install
 
 param(
@@ -62,24 +63,6 @@ param(
 
 )
 
-# check if script is elevated by evaluating well-known Administrator GIDs.
-function Get-BoolRunningAsAdministrator {
-    return [bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544")
-}
-
-# given a string message, write to host and a basic Script Host popup
-function Write-HostAndPopup {
-
-    [CmdletBinding()]
-    param (
-        [string]$message
-    )
-
-    Write-Host($message)
-    $wshell.Popup($message) # this is created on line 119
-
-}
-
 function Install-WingetRange {
 
     [CmdletBinding()]
@@ -129,15 +112,16 @@ function Set-RegistryValue {
         [int]$value
     )
 
+    # if exists set value
     if (Get-ItemProperty -Path $key_path -Name $value_name) {
         Set-ItemProperty -Path $key_path -Name $value_name -value $value -Force
-    } else {
+    } else { # if not exists create value
         New-ItemProperty -Path $key_path -Name $value_name -value $value -Type $value_type
     }
 
 }
 
-# not working as far as I know
+# TODO: not working as far as I know
 function Install-Adk {
 
     [String]$AdkPath = Convert-Path "~\Downloads\adksetup.exe"
@@ -148,12 +132,12 @@ function Install-Adk {
 
 }
 
-# Scaffolding: initialize Script Host shell object for diag popups
-$wshell = New-Object -ComObject Wscript.Shell
+# check if script is elevated by evaluating well-known Administrator GIDs.
+[Boolean]$is_administrator = (([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544")
 # if not running elevated, fail
-if ((Get-BoolRunningAsAdministrator)) {
-    Write-HostAndPopup("This script must not be run as Administrator. Exiting.")
-    Exit
+if (($is_administrator)) {
+    Write-Host "@@@ This script must not be run as Administrator. Exiting. @@@"
+    Exit 1
 }
 
 if ($use_registry_tweaks) {
@@ -197,7 +181,9 @@ if ($disable_llmnr) {
 
 if ($enable_hyperv) {
     
-    # this requires elevation
+    Write-Host("+++ Enabling Hyper-V +++")
+    # this requires elevation? Probably?
+    # TODO: fix above
     Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All -IncludeManagementTools
 
     if ($install_docker_ce) {
@@ -213,42 +199,62 @@ if ($enable_hyperv) {
         
     }
 
+    if ($install_wsl) {
+        Write-Host("+++ Installing WSL +++")
+        if ($install_debian) {
+            Write-Host("+++ WSL: Installing Debian +++")
+            wsl.exe --install -d Debian
+        } else {
+            Write-Host("+++ WSL: Installing default distro +++")
+            wsl.exe --install
+        }
+    }
+    
+
     if ($install_windows_sandbox) {
 
-        # this requires elevation
+        Write-Host("+++ Enabling Windows Sandbox +++")
+        # this requires elevation and does not prompt
+        # TODO: fix above
         Enable-WindowsOptionalFeature -FeatureName "Containers-DisposableClientVM" -Online -NoRestart -ErrorAction Stop
 
     }
 
 }
+
+# TODO: this is broken
 # if ($install_adk) { Install-Adk }
 
-# Scaffolding: install the Scoop package manager if it is not already present
-if ($install_scoop -and $install_devtools) {
+if ($install_devtools) {
 
-    Write-Host("+++ pre-install for Scoop - check if software exists +++")
+    if ($install_scoop) {
 
-    if (![bool](Get-Command scoop)) {
+        Write-Host("+++ pre-install for Scoop - check if software exists +++")
 
-        Write-Host("+++ Scoop not found. Installing the Scoop package manager +++")
-        Invoke-Expression "& {$(Invoke-RestMethod get.scoop.sh)} -RunAsAdmin" -ErrorVariable ScoopErrVar -ErrorAction Inquire
+        if (![bool](Get-Command scoop)) {
 
-    } else {
+            Write-Host("+++ Scoop not found. Installing the Scoop package manager +++")
+            Invoke-Expression "& {$(Invoke-RestMethod get.scoop.sh)} -RunAsAdmin" -ErrorVariable ScoopErrVar -ErrorAction Inquire
 
-        Write-Host("+++ Scoop was found. Skipping installation +++")
+        } else {
+
+            Write-Host("+++ Scoop was found. Skipping installation +++")
+
+        }
+
+        Install-ScoopRange($scoop_early_deps)
+        Add-ScoopBucketRange($scoop_buckets)
+        Install-ScoopRange($scoop_utilities)
+        Install-ScoopRange($scoop_langs)
 
     }
 
-    Install-ScoopRange($scoop_early_deps)
-    Add-ScoopBucketRange($scoop_buckets)
-    Install-ScoopRange($scoop_utilities)
-    Install-ScoopRange($scoop_langs)
-
 } else {
-    Write-Host("--- Scoop installation bypassed ---")
+    Write-Host("--- Skipping development group ---")
 }
 
 # Install apps from the Microsoft Store with winget
+# TODO: skip UAC prompts while script is running
 if ($use_winget) {
     Write-Host("+++ Beginning installation of Windows Store apps. Expect installer prompts +++")
     if ($install_winget_dependencies) {
@@ -271,28 +277,5 @@ if ($use_winget) {
     }
 }
 
-if ($enable_hyperv -and $install_wsl) {
-    Write-Host("+++ Installing WSL +++")
-    if ($install_debian) {
-        Write-Host("+++ WSL: Installing Debian +++")
-        wsl.exe --install -d Debian
-    } else {
-        Write-Host("+++ WSL: Installing default distro +++")
-        wsl.exe --install
-    }
-}
-
-Write-Host("!!! Script completed successfully !!!")
+Write-Host("!!! Script completed !!!")
 Exit 0
-
-# this just never installs Debian on normal W11 (that has wsl by default)
-# Install Windows Subsystem for Linux with Debian instead of default Ubuntu
-# if (!(Get-BoolIsInstalled("wsl"))) {
-#   Write-Host("+++ WSL not found. Installing wsl (wsl.exe --install -d debian) +++")
-#    wsl.exe --install -d debian
-#} else {
-#    Write-Host("+++ WSL was found. Skipping installation +++")
-#}
-
-# Cleanup: Reset ExecutionPolicy to Restricted - this prevents the user from running scripts (default setting on 21H2 desktop)
-# Set-ExecutionPolicy -ExecutionPolicy Restricted -Scope CurrentUser
