@@ -5,59 +5,62 @@
 
 # https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install
 
-[Boolean]$disable_llmnr = 0
+param(
 
-[Boolean]$enable_hyperv = 1
-    
-    [Boolean]$install_wsl = 1
+    [Boolean]$disable_llmnr = 0,
 
-        [Boolean]$install_debian = 1
+    [Boolean]$enable_hyperv = 1,
+        
+        [Boolean]$install_wsl = 1,
 
-    [Boolean]$install_windows_sandbox = 1
+            [Boolean]$install_debian = 1,
 
-    [Boolean]$install_docker_ce = 0
+        [Boolean]$install_windows_sandbox = 1,
 
-# [Boolean]$install_adk = 0
+        [Boolean]$install_docker_ce = 0,
 
-[Boolean]$install_devtools = 1 # this grabs Scoop, the winget_devtools list, and WSL
+    # [Boolean]$install_adk = 0
 
-    [Boolean]$install_scoop = 1
+    [Boolean]$install_devtools = 1, # this grabs Scoop, the winget_devtools list, and WSL
 
-        [Array]$scoop_early_deps = @("git", "aria2")
+        [Boolean]$install_scoop = 1,
 
-        [Array]$scoop_buckets = @("java", "extras", "sysinternals")
+            [Array]$scoop_early_deps = @("git", "aria2"),
 
-        [Array]$scoop_langs = @("python", "ruby", "go", "perl", "nodejs", "java/openjdk")
+            [Array]$scoop_buckets = @("java", "extras", "sysinternals"),
 
-        [Array]$scoop_utilities = @("sudo", "curl", "grep", "sed", "less", "touch") # sudo MUST come first
+            [Array]$scoop_langs = @("python", "ruby", "go", "perl", "nodejs", "java/openjdk"),
 
-[Boolean]$use_winget = 1
+            [Array]$scoop_utilities = @("sudo", "curl", "grep", "sed", "less", "touch"), # sudo MUST come first
 
-    [Boolean]$install_winget_dependencies = 1
-    [Array]$winget_dependencies = @("Microsoft.VCRedist.2015+.x64", "Microsoft.VCRedist.2015+.x86")
+    [Boolean]$use_winget = 1,
 
-    [Boolean]$install_winget_productivity = 1
-    [Array]$winget_productivity = @("Spotify.Spotify", "Mozilla.Firefox.DeveloperEdition", "Microsoft.Office")
+        [Boolean]$install_winget_dependencies = 1,
+        [Array]$winget_dependencies = @("Microsoft.VCRedist.2015+.x64", "Microsoft.VCRedist.2015+.x86"),
 
-    [Boolean]$install_winget_utilities = 1
-    [Array]$winget_utilities = @("7zip.7zip", "REALiX.HWiNFO", "Bitwarden.Bitwarden")
+        [Boolean]$install_winget_productivity = 1,
+        [Array]$winget_productivity = @("Spotify.Spotify", "Mozilla.Firefox.DeveloperEdition", "Microsoft.Office"),
 
-    [Boolean]$install_winget_extras = 1
-    [Array]$winget_extras = @("Nlitesoft.Nlite", "SyncTrayzor.SyncTrayzor", "Microsoft.PowerToys")
+        [Boolean]$install_winget_utilities = 1,
+        [Array]$winget_utilities = @("7zip.7zip", "REALiX.HWiNFO", "Bitwarden.Bitwarden"),
 
-    [Boolean]$install_winget_devtools = 1
-    [Array]$winget_devtools = @("Git.Git", "GitHub.cli", "Microsoft.VisualStudioCode", "Microsoft.VisualStudioCode.CLI", "Microsoft.PowerShell")
+        [Boolean]$install_winget_extras = 1,
+        [Array]$winget_extras = @("Nlitesoft.Nlite", "SyncTrayzor.SyncTrayzor", "Microsoft.PowerToys"),
 
-    [Boolean]$install_winget_networking = 1
-    [Array]$winget_networking = @("Insecure.Npcap", "WiresharkFoundation.Wireshark", "PuTTY.PuTTY")
+        [Boolean]$install_winget_devtools = 1,
+        [Array]$winget_devtools = @("Git.Git", "GitHub.cli", "Microsoft.VisualStudioCode", "Microsoft.VisualStudioCode.CLI", "Microsoft.PowerShell"),
 
-[Boolean]$use_registry_tweaks = 1
+        [Boolean]$install_winget_networking = 1,
+        [Array]$winget_networking = @("Insecure.Npcap", "WiresharkFoundation.Wireshark", "PuTTY.PuTTY"),
 
-    [Boolean]$taskbar_single_monitor = 1 # set taskbar to single screen only
-    [Boolean]$taskbar_hide_search = 1 # hide the Search box
-    [Boolean]$taskbar_hide_taskview = 1 # hide the Task View taskbar button
-    
-    [Boolean]$simple_context_menu = 1 # disable the new context menu
+    [Boolean]$use_registry_tweaks = 1,
+
+        [Boolean]$taskbar_single_monitor = 1, # set taskbar to single screen only
+        [Boolean]$taskbar_hide_search = 1, # hide the Search box
+        [Boolean]$taskbar_hide_taskview = 1, # hide the Task View taskbar button
+        [Boolean]$simple_context_menu = 1 # disable the new context menu
+
+)
 
 # check if script is elevated by evaluating well-known Administrator GIDs.
 function Get-BoolRunningAsAdministrator {
