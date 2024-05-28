@@ -1,33 +1,5 @@
-# windows-install-scripts
+# Windows Installation Scripts
 
-Apps for fresh W11 install
-==========================
-- Bitwarden Desktop
-- hwinfo64
-- Firefox Developer Edition
-- Syncthing
-- VSCode
-- Hyper-V & Manager
-- 7zip
-- Windows ADK & PE
-- WSL Debian
-- git bash
-- cygwin
-- Spotify
-- npcap
-- Wireshark
-- Visual C++ redist
-- Python
-- SSH client
+Personal script to prep Windows workstation/VM for use. Installs applications and makes some tweaks to the base system.
 
-Chores for fresh W11 install
-============================
-- prune Start Menu and taskbar
-- app setup
-- windows update
-- Defender configuration
-- Azure AD join
-- Disable netbios
-- Disable LLMNR
-- Pull private key
-- Sync ~/
+Only tested on latest LTSC branch of Windows; some parts of the script may not work. Feel free to fork and modify as you see fit.
