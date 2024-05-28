@@ -13,7 +13,11 @@
 
         [Boolean]$install_debian = 1
 
-[Boolean]$install_adk = 0
+    [Boolean]$install_windows_sandbox = 1
+
+    [Boolean]$install_docker_ce = 0
+
+# [Boolean]$install_adk = 0
 
 [Boolean]$install_devtools = 1 # this grabs Scoop, the winget_devtools list, and WSL
 
@@ -32,20 +36,28 @@
     [Boolean]$install_winget_dependencies = 1
     [Array]$winget_dependencies = @("Microsoft.VCRedist.2015+.x64", "Microsoft.VCRedist.2015+.x86")
 
-    [Boolean]$install_winget_niceties = 1
-    [Array]$winget_niceties = @("Spotify.Spotify", "Mozilla.Firefox.DeveloperEdition", "SyncTrayzor.SyncTrayzor", "Microsoft.PowerToys")
+    [Boolean]$install_winget_productivity = 1
+    [Array]$winget_productivity = @("Spotify.Spotify", "Mozilla.Firefox.DeveloperEdition", "Microsoft.Office")
 
     [Boolean]$install_winget_utilities = 1
-    [Array]$winget_utilities = @("7zip.7zip", "REALiX.HWiNFO", "Bitwarden.Bitwarden", "Nlitesoft.Nlite")
+    [Array]$winget_utilities = @("7zip.7zip", "REALiX.HWiNFO", "Bitwarden.Bitwarden")
 
     [Boolean]$install_winget_extras = 1
-    [Array]$winget_extras = @("valinet.ExplorerPatcher")
+    [Array]$winget_extras = @("Nlitesoft.Nlite", "SyncTrayzor.SyncTrayzor", "Microsoft.PowerToys")
 
     [Boolean]$install_winget_devtools = 1
     [Array]$winget_devtools = @("Git.Git", "GitHub.cli", "Microsoft.VisualStudioCode", "Microsoft.VisualStudioCode.CLI", "Microsoft.PowerShell")
 
     [Boolean]$install_winget_networking = 1
     [Array]$winget_networking = @("Insecure.Npcap", "WiresharkFoundation.Wireshark", "PuTTY.PuTTY")
+
+[Boolean]$use_registry_tweaks = 1
+
+    [Boolean]$taskbar_single_monitor = 1 # set taskbar to single screen only
+    [Boolean]$taskbar_hide_search = 1 # hide the Search box
+    [Boolean]$taskbar_hide_taskview = 1 # hide the Task View taskbar button
+    
+    [Boolean]$simple_context_menu = 1 # disable the new context menu
 
 # check if script is elevated by evaluating well-known Administrator GIDs.
 function Get-BoolRunningAsAdministrator {
@@ -61,7 +73,7 @@ function Write-HostAndPopup {
     )
 
     Write-Host($message)
-    $wshell.Popup($message)
+    $wshell.Popup($message) # this is created on line 119
 
 }
 
@@ -104,6 +116,24 @@ function Add-ScoopBucketRange {
 
 }
 
+function Set-RegistryValue {
+
+    [CmdletBinding()]
+    param (
+        [String]$key_path,
+        [String]$value_name,
+        [String]$value_type,
+        [int]$value
+    )
+
+    if (Get-ItemProperty -Path $key_path -Name $value_name) {
+        Set-ItemProperty -Path $key_path -Name $value_name -value $value -Force
+    } else {
+        New-ItemProperty -Path $key_path -Name $value_name -value $value -Type $value_type
+    }
+
+}
+
 # not working as far as I know
 function Install-Adk {
 
@@ -123,6 +153,31 @@ if ((Get-BoolRunningAsAdministrator)) {
     Exit
 }
 
+if ($use_registry_tweaks) {
+
+    if ($taskbar_single_monitor) {
+        Set-RegistryValue -key_path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -value_name 'MMTaskbarEnabled' -value_type 'DWord' -value 0
+    }
+
+    if ($taskbar_hide_search) {
+        Set-RegistryValue -key_path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Search' -value_name 'SearchBoxTaskbarMode' -value_type 'DWord' -value 0
+    }
+
+    if ($taskbar_hide_taskview) { 
+        Set-RegistryValue -key_path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -value_name 'ShowTaskViewButton' -value_type 'DWord' -value 0
+    }
+
+    if ($simple_context_menu) {
+        
+        New-Item -Path 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32'
+
+        Set-RegistryValue -key_path 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32' -value_name '(Default)' -value_type String -value ''
+        
+    }
+
+    Stop-Process -Name Explorer -Force
+}
+
 if ($disable_llmnr) {
 
     # disable Link-Local Multicast Name Resolution (LLMNR), which forces use of a DNS server
@@ -134,16 +189,36 @@ if ($disable_llmnr) {
 }
 
 # Windows tweaks: disable Netbios - this will only disable Netbios on adapters that are currently up
-# TODO: spawn a script on network adapter change to kill netbios
+# TODO: spawn a script on network adapter change to kill netbios?
 # (Get-WmiObject Win32_NetworkAdapterConfiguration -Filter IpEnabled="true").SetTcpipNetbios(2)
 
 if ($enable_hyperv) {
-
+    
+    # this requires elevation
     Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All -IncludeManagementTools
 
-}
+    if ($install_docker_ce) {
 
-if ($install_adk) { Install-Adk }
+        # this reboots the computer unprompted in the middle of the script, thanks Microsoft
+        # TODO: fix before implementing
+        <# if ($install_docker_ce) {
+
+            Invoke-WebRequest -UseBasicParsing "https://raw.githubusercontent.com/microsoft/Windows-Containers/Main/helpful_tools/Install-DockerCE/install-docker-ce.ps1" -o install-docker-ce.ps1
+            .\install-docker-ce.ps1
+            
+        } #>
+        
+    }
+
+    if ($install_windows_sandbox) {
+
+        # this requires elevation
+        Enable-WindowsOptionalFeature -FeatureName "Containers-DisposableClientVM" -Online -NoRestart -ErrorAction Stop
+
+    }
+
+}
+# if ($install_adk) { Install-Adk }
 
 # Scaffolding: install the Scoop package manager if it is not already present
 if ($install_scoop -and $install_devtools) {
@@ -176,8 +251,8 @@ if ($use_winget) {
     if ($install_winget_dependencies) {
         Install-WingetRange $winget_dependencies
     }
-    if ($install_winget_niceties) {
-        Install-WingetRange $winget_niceties
+    if ($install_winget_productivity) {
+        Install-WingetRange $winget_productivity
     }
     if ($install_winget_utilities) {
         Install-WingetRange $winget_utilities
