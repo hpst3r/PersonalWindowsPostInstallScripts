@@ -31,9 +31,10 @@ param(
 
             # hash of hwid = friendly name
             "E059D9801FDE40FE35781C7C45D3C427D4C5CCADCFFF92854B9FCC998D2BC2AA" = "t14sg1a"
-            
 
         },
+
+    [Boolean]
 
     [Boolean]$install_programs = 1,
 
@@ -56,7 +57,7 @@ param(
             [Array]$winget_dependencies = @("Microsoft.VCRedist.2015+.x64", "Microsoft.VCRedist.2015+.x86"),
 
             [Boolean]$install_winget_productivity = 1,
-            [Array]$winget_productivity = @("Spotify.Spotify", "Mozilla.Firefox.DeveloperEdition", "Microsoft.Office"),
+            [Array]$winget_productivity = @("Spotify.Spotify", "Mozilla.Firefox.DeveloperEdition", "Microsoft.Office", "Notion.Notion", "JGraph.Draw"),
 
             [Boolean]$install_winget_utilities = 1,
             [Array]$winget_utilities = @("7zip.7zip", "REALiX.HWiNFO", "Bitwarden.Bitwarden"),
@@ -128,6 +129,20 @@ function Add-ScoopBucketRange {
 
 }
 
+Function New-RegistryKey {
+
+    param (
+        [String]$key_path
+    )
+
+    if (-not (Test-Path -Path $key_path)) {
+
+        New-Item -Path $key_path -Force
+
+    }
+
+}
+
 function Set-RegistryValue {
 
     [CmdletBinding()]
@@ -155,20 +170,6 @@ function Install-Adk {
     Invoke-WebRequest -uri "https://go.microsoft.com/fwlink/?linkid=2243390" -outfile $AdkPath
 
     & $AdkPath /quiet /installpath C:\ADK /features +
-
-}
-
-Function New-RegistryKey {
-
-    param (
-        [String]$key_path
-    )
-
-    if (-not (Test-Path -Path $key_path)) {
-
-        New-Item -Path $key_path -Force
-
-    }
 
 }
 
@@ -312,7 +313,7 @@ if ($install_programs) {
         if (-not (Get-Command winget.exe)) { Install-Winget }
     
         Write-Host("+++ Beginning installation of Windows Store apps. +++")
-    
+
         if ($install_winget_dependencies) { Install-WingetRange $winget_dependencies }
     
         if ($install_winget_productivity) { Install-WingetRange $winget_productivity }
