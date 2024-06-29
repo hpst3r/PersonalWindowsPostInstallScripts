@@ -16,8 +16,8 @@ param(
         [Boolean]$install_docker_ce = 0,
 
     # [Boolean]$install_adk = 0
+    # this now uses Winget and has been relocated.
 
-    
     [Boolean]$use_registry_tweaks = 1,
 
         [Boolean]$taskbar_single_monitor = 1, # set taskbar to single screen only
@@ -60,10 +60,10 @@ param(
             [Array]$winget_productivity = @("Spotify.Spotify", "Mozilla.Firefox.DeveloperEdition", "Microsoft.Office", "Notion.Notion", "JGraph.Draw"),
 
             [Boolean]$install_winget_utilities = 1,
-            [Array]$winget_utilities = @("7zip.7zip", "REALiX.HWiNFO", "Bitwarden.Bitwarden"),
+            [Array]$winget_utilities = @("7zip.7zip", "REALiX.HWiNFO", "AgileBits.1Password"),
 
             [Boolean]$install_winget_extras = 1,
-            [Array]$winget_extras = @("Nlitesoft.Nlite", "SyncTrayzor.SyncTrayzor", "Microsoft.PowerToys"),
+            [Array]$winget_extras = @("Nlitesoft.Nlite", "SyncTrayzor.SyncTrayzor", "Microsoft.PowerToys", "Armin2208.WindowsAutoNightMode"),
 
             [Boolean]$install_winget_devtools = 1,
             [Array]$winget_devtools = @("Git.Git", "GitHub.cli", "Microsoft.VisualStudioCode", "Microsoft.VisualStudioCode.CLI", "Microsoft.PowerShell"),
@@ -71,8 +71,17 @@ param(
             [Boolean]$install_winget_networking = 1,
             [Array]$winget_networking = @("Insecure.Npcap", "WiresharkFoundation.Wireshark", "PuTTY.PuTTY"),
 
+            [Boolean]$install_winget_virtualization = 1,
+            [Array]$winget_virtualization = @("Hashicorp.Vagrant")
+
+            [Boolean]$install_winget_cli_tools = 1,
+            [Array]$winget_cli_tools = @("Microsoft.WindowsTerminal", "Neovim.Neovim")
+
             [Boolean]$install_winget_3d = 1,
             [Array]$winget_3d = @("UltiMaker.Cura")
+
+            [Boolean]$install_adk = 0
+            [Array]$adk = @("Microsoft.WindowsADK")
 
 )
 
@@ -159,17 +168,6 @@ function Set-RegistryValue {
     } else { # if not exists create value
         New-ItemProperty -Path $key_path -Name $value_name -value $value -Type $value_type
     }
-
-}
-
-# TODO: not working as far as I know
-function Install-Adk {
-
-    [String]$AdkPath = Convert-Path "~\Downloads\adksetup.exe"
-
-    Invoke-WebRequest -uri "https://go.microsoft.com/fwlink/?linkid=2243390" -outfile $AdkPath
-
-    & $AdkPath /quiet /installpath C:\ADK /features +
 
 }
 
@@ -325,6 +323,12 @@ if ($install_programs) {
         if ($install_winget_extras) { Install-WingetRange $winget_extras } 
     
         if ($install_winget_networking) { Install-WingetRange $winget_networking }
+
+        if ($install_winget_cli_tools) { Install-WingetRange $winget_cli_tools }
+
+        if ($install_winget_virtualization) { Install-WingetRange $winget_virtualization }
+
+        if ($install_adk) { Install-WingetRange $adk }
     
     }
 
