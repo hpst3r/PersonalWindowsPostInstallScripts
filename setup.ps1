@@ -72,15 +72,15 @@ param(
             [Array]$winget_networking = @("Insecure.Npcap", "WiresharkFoundation.Wireshark", "PuTTY.PuTTY"),
 
             [Boolean]$install_winget_virtualization = 1,
-            [Array]$winget_virtualization = @("Hashicorp.Vagrant")
+            [Array]$winget_virtualization = @("Hashicorp.Vagrant"),
 
             [Boolean]$install_winget_cli_tools = 1,
-            [Array]$winget_cli_tools = @("Microsoft.WindowsTerminal", "Neovim.Neovim")
+            [Array]$winget_cli_tools = @("Microsoft.WindowsTerminal", "Neovim.Neovim"),
 
             [Boolean]$install_winget_3d = 1,
-            [Array]$winget_3d = @("UltiMaker.Cura")
+            [Array]$winget_3d = @("UltiMaker.Cura"),
 
-            [Boolean]$install_adk = 0
+            [Boolean]$install_adk = 0,
             [Array]$adk = @("Microsoft.WindowsADK")
 
 )
@@ -182,16 +182,7 @@ Function Get-Hash {
 
 }
 
-# check if script is elevated by evaluating well-known Administrator GIDs.
-[Boolean]$is_administrator = (([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544")
-# if not running elevated, fail
-if (($is_administrator)) {
-    Write-Host "@@@ This script must not be run as Administrator. Exiting. @@@"
-    Exit 1
-}
-
 # basics
-
 Set-TimeZone -Name "Eastern Standard Time"
 # TODO: fix - requires admin
 # sudo config --enable normal
