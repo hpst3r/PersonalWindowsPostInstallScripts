@@ -228,8 +228,8 @@ Function Get-Hash {
 
 # basics
 Set-TimeZone -Name 'Eastern Standard Time'
-# TODO: fix - requires admin
-# sudo config --enable normal
+
+sudo config --enable normal
 
 if ($use_registry_tweaks) {
 
@@ -239,10 +239,8 @@ if ($use_registry_tweaks) {
         key_path = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
         value_name = 'MMTaskbarEnabled'
         value_type = 'DWord'
-        value = 1
+        value = if ( $taskbar_single_monitor ) { 0 } else { 1 }
     }
-
-    $MultiMonitorTaskbarMode['value'] = if ( $taskbar_single_monitor ) { 0 } else { 1 }
 
     # show (1, default) or hide (0) the search box on the taskbar
 
@@ -250,10 +248,8 @@ if ($use_registry_tweaks) {
         key_path = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Search'
         value_name = 'SearchBoxTaskbarMode'
         value_type = 'DWord'
-        value = 1
+        value = if ( $taskbar_hide_search ) { 0 } else { 1 }
     }
-
-    $SearchBoxTaskbarMode['value'] = if ( $taskbar_hide_search ) { 0 } else { 1 }
 
     # show (1, default) or hide (0) the task view button on the taskbar
 
@@ -261,10 +257,8 @@ if ($use_registry_tweaks) {
         key_path = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
         value_name = 'ShowTaskViewButton'
         value_type = 'DWord'
-        value = 1
+        value = if ( $taskbar_hide_taskview ) { 0 } else { 1 }
     }
-
-    $ShowTaskViewButton['value'] = if ( $taskbar_hide_taskview ) { 0 } else { 1 }
 
     # create a registry key to disable the new Windows 11 context menu
 
@@ -283,7 +277,7 @@ if ($use_registry_tweaks) {
         
     }
 
-    [Array]$RegistryKeys = @(
+    [Array]$RegistryValues = @(
 
         $MultiMonitorTaskbarMode
         $SearchBoxTaskbarMode
@@ -291,9 +285,7 @@ if ($use_registry_tweaks) {
         
     )
 
-    Foreach ($RegistryKey in $RegistryKeys) {
-        Set-RegistryValue @RegistryKey
-    }
+    Foreach ($RegistryValue in $RegistryValues) { Set-RegistryValue @RegistryValue }
 
     # kill Explorer (it will restart) to apply changes immediately
     Stop-Process -Name Explorer -Force
@@ -303,19 +295,21 @@ if ($use_registry_tweaks) {
 # disable link-local multicast name resolution (LLMNR), which forces the use of a DNS server
 if ($disable_llmnr) {
 
-    New-Item @{
+    $ItemParams = @{
         Path = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT'
         Name = 'DNSClient'
         Force = $true
     }
+    New-Item @ItemParams
 
-    New-ItemProperty @{
+    $ItemPropertyParams = @{
         Path = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient'
         Name = 'EnableMultiCast'
         PropertyType = 'DWORD'
         Value = 0
         Force = $true
     }
+    New-ItemProperty @ItemPropertyParams
 
 }
 
@@ -325,7 +319,6 @@ if ($disable_llmnr) {
 
 if ($enable_hyperv) {
     
-    Write-Host('+++ Enabling Hyper-V +++')
     Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
 
     if ($install_docker_ce) {
@@ -342,14 +335,14 @@ if ($enable_hyperv) {
     }
 
     if ($install_wsl) {
-        Write-Host('+++ Installing WSL +++')
-        if ($install_debian) {
-            Write-Host('+++ WSL: Installing Debian +++')
-            wsl.exe --install -d Debian
-        } else {
-            Write-Host('+++ WSL: Installing default distro +++')
-            wsl.exe --install
+
+        # without explicitly specifying this, it is not enabled
+        Enable-WindowsOptionalFeature = @{
+            Online = $true
+            FeatureName = 'VirtualMachinePlatform'
         }
+
+        if ($install_debian) { wsl.exe --install -d Debian } else { wsl.exe --install }
     }
     
 
@@ -372,7 +365,7 @@ if ($install_programs) {
         
         Write-Host('+++ pre-install for Scoop - check if it already exists +++')
     
-        if (![bool](Get-Command scoop)) {
+        if ( -not [bool](Get-Command scoop )) {
     
             Write-Host('+++ Scoop not found. Installing the Scoop package manager +++')
             Invoke-Expression '& {$(Invoke-RestMethod get.scoop.sh)} -RunAsAdmin' -ErrorVariable ScoopErrVar -ErrorAction Inquire
@@ -390,6 +383,7 @@ if ($install_programs) {
     } else { Write-Host('--- Skipping development group ---') }
     
     # Install apps with the winget package manager
+    # TODO: fix this mess
     if ($use_winget) {
     
         if (-not (Get-Command winget.exe)) { Install-Winget }
@@ -423,6 +417,8 @@ if ($rename_computer) {
     # match hash of device S/Ns in a hash table ($machines) with friendly names - not posting my S/Ns on github
 
     # get SHA256 from the serial number
+    # TODO: 24H2 does not have wmic
+    # replace with get-cmiobject
     $device_serial = Get-Hash -text (WMIC.exe bios get serialnumber) -algorithm SHA256
 
     # match in LUT for friendly name
