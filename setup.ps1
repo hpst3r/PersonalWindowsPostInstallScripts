@@ -3,129 +3,196 @@
 
 param(
 
-    [Boolean]$disable_llmnr = 1,
+    # TODO: point Winget installer at this directory
+    [System.IO.DirectoryInfo]$WorkingPath = 'C:\tmp\wpinst',
+    # install .NET 3.5 (3.0, 2.0)
 
-    [Boolean]$enable_hyperv = 1,
+    # TODO: implement
+    [Boolean]$EncryptDisks = 1,
+
+    [Boolean]$InstallDotNet3 = 1,
+
+    # enable the Hyper-V hypervisor environment
+    [Boolean]$EnableHyperV = 1,
         
-        [Boolean]$install_wsl = 1,
+        # installs the Windows Subsystem for Linux and specified distro, or Debian
+        [Boolean]$InstallWsl = 1,
 
-            [Boolean]$install_debian = 1,
+            # my default is Debian
+            [String]$WslDistro = 'Debian',
 
-        [Boolean]$install_windows_sandbox = 1,
+        # enables the Disposable Client VM feature
+        [Boolean]$InstallWindowsSandbox = 1,
 
-        [Boolean]$install_docker_ce = 0,
+        # install the Docker Container Engine TODO: Fix
+        [Boolean]$InstallDockerCe = 0,
 
-    [Boolean]$use_registry_tweaks = 1,
+    # make registry tweaks to adjust the performance and functionality of Windows
+    [Boolean]$UseRegistryTweaks = 1,
 
-        [Boolean]$taskbar_single_monitor = 1, # set taskbar to single screen only
-        [Boolean]$taskbar_hide_search = 1, # hide the Search box
-        [Boolean]$taskbar_hide_taskview = 1, # hide the Task View taskbar button
-        [Boolean]$simple_context_menu = 1, # disable the new context menu
+        # 1 - display the taskbar on main screen only
+        # 0 - display taskbar on all screens (W11 default)
+        [Boolean]$TaskbarSingleMonitor = 1,
+        # 1 - hide the Search box on the taskbar
+        # 0 - show the Search box on the taskbar (W11 default)
+        [Boolean]$TaskbarHideSearch = 1,
+        # 1 - hide the Task View taskbar button
+        # 2 - show the Task View taskbar button (W11 default)
+        [Boolean]$TaskbarHideTaskview = 1,
+        # 1 - force the W10 style 'more options' context menu on right click
+        # 0 - use the default W11 taskbar
+        [Boolean]$SimpleContextMenu = 1,
+        # 1 - disables link-local multicast name resolution (LLMNR) (force DNS server)
+        # 0 - keep LLMNR enabled (W11 default)
+        [Boolean]$DisableLlmnr = 1,
 
-    [Boolean]$rename_computer = 1,
+    # This is just scaffolding for now. TODO: Future features
+    [Boolean]$SetGroupPolicy = 1,
+
+        [Boolean]$DisableMicrosoftAccountSignIn = 1,
+        [Boolean]$ForceWindowsHelloMfa = 1,
+        [Boolean]$ConfigureFirefox = 1,
+        [Boolean]$DisableTransparency = 1,
+        [Boolean]$DisableAnimations = 0,
+        [Boolean]$DrawWindowsInMotion = 1,
+
+    # This is also scaffolding. TODO: Future features
+    [Boolean]$SyncPersonalPowerShellFunctions = 1,
+    [Boolean]$RestoreVmTemplatesFromNetwork = 1,
+    [Boolean]$RestoreIsoImagesFromNetwork = 1,
+    [Boolean]$InstallBackupJobs = 1,
+
+    # rename the computer by hashing the serial number and using LUT below
+    [Boolean]$RenameComputer = 1,
         
-        [hashtable]$machines = @{
+        # where hash of hwid = friendly name:
+        [hashtable]$Machines = @{
 
-            # hash of hwid = friendly name
-            'E059D9801FDE40FE35781C7C45D3C427D4C5CCADCFFF92854B9FCC998D2BC2AA' = 't14sg1a'
+            'E059D9801FDE40FE35781C7C45D3C427D4C5CCADCFFF92854B9FCC998D2BC2AA' = 'liam-t14sg1a'
+            '4C25652AF622E1A1AA13053F25187960621D08EBD554C319AFB4EDB0B44E7588' = 'liam-p1g4'
+            '5EF84F905BCAEA90F3E2984D02085AE0CC76CF46BDC8BECCDAE3DFA621402D76' = 'liam-12900ks'
 
         },
+    
+    # global on/off toggle to install apps with any package manager.
+    # the following True/False bindings apply to all InstallX boolean config switches.
+    # 1 - install applications
+    # 0 - do not install applications
+    [Boolean]$InstallPrograms = 1,
 
-    [Boolean]
+        [Boolean]$InstallScoop = 1,
 
-    [Boolean]$install_programs = 1,
+            # thing needed to download Scoop buckets, and Git for some reason
+            # removing Git will probably break something
+            [Array]$ScoopEarlyDeps = @(
+                'git',
+                'aria2'),
 
-        [Boolean]$install_devtools = 1, # this grabs Scoop, the winget_devtools list, and WSL
+            # scoop repositories
+            [Array]$ScoopBuckets = @(
+                'java',
+                'extras',
+                'sysinternals'),
 
-            [Boolean]$install_scoop = 1,
+            # programming languages to install with Scoop.
+            # I prefer to manage them this way vs Winget
+            [Array]$ScoopLangs = @(
+                'python',
+                'ruby',
+                'go',
+                'perl',
+                'nodejs',
+                'java/openjdk'),
 
-                [Array]$scoop_early_deps = @(
-                    'git',
-                    'aria2'),
+            # utilities to install with Scoop
+            # sudo is a prerequisite for something, I think. TODO: figure this out
+            [Array]$ScoopUtilities = @(
+                'sudo',
+                'curl',
+                'grep',
+                'sed',
+                'less',
+                'touch'), # sudo MUST come first
 
-                [Array]$scoop_buckets = @(
-                    'java',
-                    'extras',
-                    'sysinternals'),
+        [Boolean]$UseWinget = 1,
 
-                [Array]$scoop_langs = @(
-                    'python',
-                    'ruby',
-                    'go',
-                    'perl',
-                    'nodejs',
-                    'java/openjdk'),
-
-                [Array]$scoop_utilities = @(
-                    'sudo',
-                    'curl',
-                    'grep',
-                    'sed',
-                    'less',
-                    'touch'), # sudo MUST come first
-
-        [Boolean]$use_winget = 1,
-
-            # TODO: build array and install all desired packages from that
-            [Boolean]$install_winget_dependencies = 1,
-            [Array]$winget_dependencies = @(
+            # general dependencies wanted on any machine
+            [Array]$WingetDependencies = @(
                 'Microsoft.VCRedist.2015+.x64',
                 'Microsoft.VCRedist.2015+.x86'),
 
-            [Boolean]$install_winget_productivity = 1,
-            [Array]$winget_productivity = @(
+            # Productivity and productivity adjacent applications
+            [Boolean]$InstallWingetProductivity = 1,
+            [Array]$WingetProductivity = @(
                 'Spotify.Spotify',
                 'Mozilla.Firefox.DeveloperEdition',
                 'Microsoft.Office',
                 'Notion.Notion'
                 'Obsidian.Obsidian',
+                'Microsoft.WindowsTerminal',
                 'JGraph.Draw'),
 
-            [Boolean]$install_winget_utilities = 1,
-            [Array]$winget_utilities = @(
+            # System utilities and a password manager
+            [Boolean]$InstallWingetUtilities = 1,
+            [Array]$WingetUtilities = @(
                 '7zip.7zip',
                 'REALiX.HWiNFO',
                 'AgileBits.1Password'),
 
-            [Boolean]$install_winget_extras = 1,
-            [Array]$winget_extras = @(
+            # Extra tools that I sometimes use and sometimes do not
+            # TODO: it would be neat if I could configure Powertoys in this script, too
+            [Boolean]$InstallWingetExtras = 1,
+            [Array]$WingetExtras = @(
                 'Nlitesoft.Nlite',
                 'SyncTrayzor.SyncTrayzor',
                 'Microsoft.PowerToys',
                 'Armin2208.WindowsAutoNightMode'),
 
-            [Boolean]$install_winget_devtools = 1,
-            [Array]$winget_devtools = @(
+            # Basic development tools
+            # ...and Windows debugger because I crash my computers a lot
+            [Boolean]$InstallWingetDevtools = 1,
+            [Array]$WingetDevtools = @(
                 'Git.Git',
                 'GitHub.cli',
                 'Microsoft.VisualStudioCode',
                 'Microsoft.VisualStudioCode.CLI',
                 'Microsoft.PowerShell',
                 'Microsoft.WinDbg'),
-
-            [Boolean]$install_winget_networking = 1,
-            [Array]$winget_networking = @(
+            
+            # utilities for troubleshooting networks
+            [Boolean]$InstallWingetNetworking = 1,
+            [Array]$WingetNetworking = @(
                 'Insecure.Npcap',
                 'WiresharkFoundation.Wireshark',
-                'PuTTY.PuTTY'),
+                'PuTTY.PuTTY'), # easier than adding 5 args to openssh to connect to a 3560
 
-            [Boolean]$install_winget_virtualization = 1,
-            [Array]$winget_virtualization = @('Hashicorp.Vagrant'),
+            # utilities related to virtualization
+            [Boolean]$InstallWingetVirtualization = 1,
+            [Array]$WingetVirtualization = @('Hashicorp.Vagrant'),
 
-            [Boolean]$install_winget_cli_tools = 1,
-            [Array]$winget_cli_tools = @(
-                'Microsoft.WindowsTerminal',
-                'Neovim.Neovim'),
+            # command-line tools (text editor, ported GNU utilities maybe)
+            [Boolean]$InstallWingetCliTools = 1,
+            [Array]$WingetCliTools = @('Neovim.Neovim'),
 
-            [Boolean]$install_winget_3d = 1,
-            [Array]$winget_3d = @('UltiMaker.Cura'),
+            # anything 3D design/3D printer related
+            # unfortunately, installing AutoCAD sucks
+            [Boolean]$InstallWingetCad = 1,
+            [Array]$WingetCad = @('UltiMaker.Cura'),
 
-            [Boolean]$install_adk = 0,
-            [Array]$adk = @('Microsoft.WindowsADK'),
+            # the Windows Assessment and Deployment toolkit.
+            # I don't find myself needing this often.
+            [Boolean]$InstallWingetAdk = 0,
+            [Array]$WingetAdk = @('Microsoft.WindowsWingetAdk'),
 
-            [Array]$lenovo = @('9NR5B8GVVM13'),
+            # TODO: implement
+            # Get-WmiObject win32_bios | Select Manufacturer
+            [Boolean]$InstallOemDriverTool = 1,
+                
+                # Lenovo Commercial Vantage
+                [Array]$Lenovo = @('9NR5B8GVVM13'),
 
-            [Array]$dell = @('Dell.CommandUpdate')
+                # Dell Command | Update
+                [Array]$Dell = @('Dell.CommandUpdate')
 
 )
 
@@ -133,13 +200,29 @@ param(
 function Install-Winget {
 
     $progressPreference = 'silentlyContinue'
-    Write-Information 'Downloading WinGet and its dependencies...'
-    Invoke-WebRequest -Uri https://aka.ms/getwinget -OutFile Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle
-    Invoke-WebRequest -Uri https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx -OutFile Microsoft.VCLibs.x64.14.00.Desktop.appx
-    Invoke-WebRequest -Uri https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx -OutFile Microsoft.UI.Xaml.2.8.x64.appx
-    Add-AppxPackage Microsoft.VCLibs.x64.14.00.Desktop.appx
-    Add-AppxPackage Microsoft.UI.Xaml.2.8.x64.appx
-    Add-AppxPackage Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle
+
+    # TODO: clean this up a bit, cut line count down
+    
+    Invoke-WebRequest `
+        -Uri 'https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx' `
+        -OutFile 'Microsoft.VCLibs.x64.14.00.Desktop.appx'
+
+    Add-AppxPackage `
+        -Path 'Microsoft.VCLibs.x64.14.00.Desktop.appx'
+
+    Invoke-WebRequest `
+        -Uri 'https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx' `
+        -OutFile 'Microsoft.UI.Xaml.2.8.x64.appx'
+
+    Add-AppxPackage `
+        -Path 'Microsoft.UI.Xaml.2.8.x64.appx'
+
+    Invoke-WebRequest `
+        -Uri 'https://aka.ms/getwinget' `
+        -OutFile 'Microsoft.DesktopAppInstaller.msixbundle'
+
+    Add-AppxPackage `
+        -Path 'Microsoft.DesktopAppInstaller.msixbundle'
 
 }
 
@@ -160,11 +243,11 @@ function Install-ScoopRange {
 
     [CmdletBinding()]
     param (
-        [Array]$scoop_programs
+        [Array]$ScoopPackages
     )
 
-    foreach ($scoop_program in $scoop_programs) {
-        scoop install $scoop_program
+    foreach ($ScoopPackage in $ScoopPackages) {
+        scoop install $ScoopPackage
     }
 
 }
@@ -173,11 +256,11 @@ function Add-ScoopBucketRange {
 
     [CmdletBinding()]
     param (
-        [Array]$scoop_buckets
+        [Array]$ScoopBuckets
     )
 
-    foreach ($scoop_bucket in $scoop_buckets) {
-        scoop bucket add $scoop_bucket
+    foreach ($ScoopBucket in $ScoopBuckets) {
+        scoop bucket add $ScoopBucket
     }
 
 }
@@ -185,12 +268,14 @@ function Add-ScoopBucketRange {
 Function New-RegistryKey {
 
     param (
-        [String]$key_path
+        [String]$KeyPath
     )
 
-    if (-not (Test-Path -Path $key_path)) {
+    if (-not (Test-Path -Path $KeyPath)) {
 
-        New-Item -Path $key_path -Force
+        New-Item `
+            -Path $KeyPath `
+            -Force
 
     }
 
@@ -200,17 +285,22 @@ function Set-RegistryValue {
 
     [CmdletBinding()]
     param (
-        [String]$key_path,
-        [String]$value_name,
-        [String]$value_type,
-        [int]$value
+        [String]$KeyPath,
+        [String]$ValueName,
+        [String]$ValueType,
+        [int]$Value
     )
 
+    # splat these so they're reused
+    $PathAndValueName = @{
+        Path = $KeyPath
+        Name = $ValueName
+    }
     # if exists set value
-    if (Get-ItemProperty -Path $key_path -Name $value_name) {
-        Set-ItemProperty -Path $key_path -Name $value_name -value $value -Force
+    if (Get-ItemProperty @PathAndValueName) {
+        Set-ItemProperty @PathAndValueName -Value $Value -Force
     } else { # if not exists create value
-        New-ItemProperty -Path $key_path -Name $value_name -value $value -Type $value_type
+        New-ItemProperty @PathAndValueName -Type $ValueType -Value $Value
     }
 
 }
@@ -218,63 +308,80 @@ function Set-RegistryValue {
 Function Get-Hash {
     
     param (
-        [String]$text,
-        [String]$algorithm = 'md5'
+        [String]$Text,
+        [String]$Algorithm = 'md5'
     )
 
-    Return Get-FileHash -InputStream ([IO.MemoryStream]::new([byte[]][char[]]$text)) -Algorithm $algorithm
+    Return Get-FileHash `
+        -InputStream ([IO.MemoryStream]::new([byte[]][char[]]$Text)) `
+        -Algorithm $Algorithm
 
 }
 
 # basics
 Set-TimeZone -Name 'Eastern Standard Time'
 
-sudo config --enable normal
-
-if ($use_registry_tweaks) {
+if ($UseRegistryTweaks) {
 
     # show taskbar on all (1, default) or main (0) monitor(s)
 
     $MultiMonitorTaskbarMode = @{
-        key_path = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
-        value_name = 'MMTaskbarEnabled'
-        value_type = 'DWord'
-        value = if ( $taskbar_single_monitor ) { 0 } else { 1 }
+        KeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+        ValueName = 'MMTaskbarEnabled'
+        ValueType = 'DWord'
+        Value = if ($TaskbarSingleMonitor) { 0 } else { 1 }
     }
 
     # show (1, default) or hide (0) the search box on the taskbar
 
     $SearchBoxTaskbarMode = @{
-        key_path = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Search'
-        value_name = 'SearchBoxTaskbarMode'
-        value_type = 'DWord'
-        value = if ( $taskbar_hide_search ) { 0 } else { 1 }
+        KeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Search'
+        ValueName = 'SearchBoxTaskbarMode'
+        ValueType = 'DWord'
+        Value = if ($TaskbarHideSearch) { 0 } else { 1 }
     }
 
     # show (1, default) or hide (0) the task view button on the taskbar
 
     $ShowTaskViewButton = @{
-        key_path = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
-        value_name = 'ShowTaskViewButton'
-        value_type = 'DWord'
-        value = if ( $taskbar_hide_taskview ) { 0 } else { 1 }
+        KeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+        ValueName = 'ShowTaskViewButton'
+        ValueType = 'DWord'
+        Value = if ($TaskbarHideTaskview) { 0 } else { 1 }
     }
 
     # create a registry key to disable the new Windows 11 context menu
 
-    if ($simple_context_menu) {
+    if ($SimpleContextMenu) {
 
-        New-RegistryKey @{
-            key_path = 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32'
-        }
+        New-RegistryKey `
+            -KeyPath = 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32'
 
-        Set-RegistryValue @{
-            key_path = 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32'
-            value_name = '(Default)'
-            value_type = String
-            value = ''
-        }
+        Set-RegistryValue `
+            -KeyPath 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32' `
+            -ValueName '(Default)' `
+            -ValueType String `
+            -Value '' `
         
+    }
+
+    # disable link-local multicast name resolution (LLMNR), which forces the use of a DNS server
+    # TODO: use wrapper functions New-RegistryKey and Set-RegistryValue like context menu
+    # or, if possible, clean both up into one thing
+    if ($DisableLlmnr) {
+
+        New-Item `
+            -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT' `
+            -Name 'DNSClient' `
+            -Force $true
+
+        New-ItemProperty `
+            -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient' `
+            -Name 'EnableMultiCast' `
+            -PropertyType 'DWORD' `
+            -Value 0 `
+            -Force $true
+
     }
 
     [Array]$RegistryValues = @(
@@ -292,80 +399,69 @@ if ($use_registry_tweaks) {
 
 }
 
-# disable link-local multicast name resolution (LLMNR), which forces the use of a DNS server
-if ($disable_llmnr) {
-
-    $ItemParams = @{
-        Path = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT'
-        Name = 'DNSClient'
-        Force = $true
-    }
-    New-Item @ItemParams
-
-    $ItemPropertyParams = @{
-        Path = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient'
-        Name = 'EnableMultiCast'
-        PropertyType = 'DWORD'
-        Value = 0
-        Force = $true
-    }
-    New-ItemProperty @ItemPropertyParams
-
-}
-
 # Windows tweaks: disable Netbios - this will only disable Netbios on adapters that are currently up
 # TODO: spawn a script on network adapter change to kill netbios?
 # (Get-WmiObject Win32_NetworkAdapterConfiguration -Filter IpEnabled='true').SetTcpipNetbios(2)
 
-if ($enable_hyperv) {
+if ($EnableHyperV) {
     
-    Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
+    Enable-WindowsOptionalFeature `
+        -Online `
+        -FeatureName Microsoft-Hyper-V `
+        -All # -IncludeManagementTools
 
-    if ($install_docker_ce) {
+    if ($InstallDockerCe) {
 
-        # this reboots the computer unprompted in the middle of the script, thanks Microsoft
+        # this reboots the computer unprompted in the middle of the script
+        # thanks Microsoft
         # TODO: fix before implementing
-        <# if ($install_docker_ce) {
 
+        <#
             Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/microsoft/Windows-Containers/Main/helpful_tools/Install-DockerCE/install-docker-ce.ps1' -o install-docker-ce.ps1
             .\install-docker-ce.ps1
             
-        } #>
+        #>
         
     }
 
-    if ($install_wsl) {
+    if ($InstallWsl) {
 
-        # without explicitly specifying this, it is not enabled
-        Enable-WindowsOptionalFeature = @{
-            Online = $true
-            FeatureName = 'VirtualMachinePlatform'
-        }
+        # without explicitly adding VMP, VMP is not enabled
+        # and first WSL boot fails. Not sure why that is.
+        Enable-WindowsOptionalFeature `
+            -Online `
+            -FeatureName 'VirtualMachinePlatform'
 
-        if ($install_debian) { wsl.exe --install -d Debian } else { wsl.exe --install }
+        wsl.exe `
+            --install `
+            -d $WslDistro
+
     }
     
 
-    if ($install_windows_sandbox) {
+    if ($InstallWindowsSandbox) {
 
         Write-Host('+++ Enabling Windows Sandbox +++')
-        # this requires elevation and does not prompt
-        # TODO: fix above
-        Enable-WindowsOptionalFeature -FeatureName 'Containers-DisposableClientVM' -Online -NoRestart -ErrorAction Stop
+
+        Enable-WindowsOptionalFeature `
+            -FeatureName 'Containers-DisposableClientVM' `
+            -Online `
+            -NoRestart `
+            -ErrorAction Stop
 
     }
 
 }
 
-if ($install_programs) {
+if ($InstallPrograms) {
 
     Write-Host('+++ Installing applications +++')
 
-    if ($install_devtools -and $install_scoop) {
+    if ($InstallScoop) {
         
         Write-Host('+++ pre-install for Scoop - check if it already exists +++')
     
-        if ( -not [bool](Get-Command scoop )) {
+        if ( -not [bool](Get-Command scoop)) {
     
             Write-Host('+++ Scoop not found. Installing the Scoop package manager +++')
             Invoke-Expression '& {$(Invoke-RestMethod get.scoop.sh)} -RunAsAdmin' -ErrorVariable ScoopErrVar -ErrorAction Inquire
@@ -373,56 +469,54 @@ if ($install_programs) {
         } else { Write-Host('+++ Scoop was found. Skipping installation +++') }
     
         # install the Scoop packages necessary to add buckets
-        Install-ScoopRange($scoop_early_deps)
+        Install-ScoopRange($ScoopEarlyDeps)
         # add Scoop repos (buckets)
-        Add-ScoopBucketRange($scoop_buckets)
+        Add-ScoopBucketRange($ScoopBuckets)
         # install the Scoop packages we want
-        Install-ScoopRange($scoop_utilities)
-        Install-ScoopRange($scoop_langs)
+        Install-ScoopRange($ScoopUtilities)
+        Install-ScoopRange($ScoopLangs)
     
     } else { Write-Host('--- Skipping development group ---') }
     
     # Install apps with the winget package manager
-    # TODO: fix this mess
-    if ($use_winget) {
+    if ($UseWinget) {
     
         if (-not (Get-Command winget.exe)) { Install-Winget }
     
-        Write-Host('+++ Beginning installation of Windows Store apps. +++')
+        Write-Host('+++ Beginning installation of Winget and Windows Store apps. +++')
 
-        if ($install_winget_dependencies) { Install-WingetRange $winget_dependencies }
+        Install-WingetRange $WingetDependencies
     
-        if ($install_winget_productivity) { Install-WingetRange $winget_productivity }
+        if ($InstallWingetProductivity) { Install-WingetRange $WingetProductivity }
     
-        if ($install_winget_utilities) { Install-WingetRange $winget_utilities }
+        if ($InstallWingetUtilities) { Install-WingetRange $WingetUtilities }
     
-        if ($install_winget_devtools -and $install_devtools) { Install-WingetRange $winget_devtools }
+        if ($InstallWingetDevtools) { Install-WingetRange $WingetDevtools }
     
-        if ($install_winget_extras) { Install-WingetRange $winget_extras } 
+        if ($InstallWingetExtras) { Install-WingetRange $WingetExtras } 
     
-        if ($install_winget_networking) { Install-WingetRange $winget_networking }
+        if ($InstallWingetNetworking) { Install-WingetRange $WingetNetworking }
 
-        if ($install_winget_cli_tools) { Install-WingetRange $winget_cli_tools }
+        if ($InstallWingetCliTools) { Install-WingetRange $WingetCliTools }
 
-        if ($install_winget_virtualization) { Install-WingetRange $winget_virtualization }
+        if ($InstallWingetVirtualization) { Install-WingetRange $WingetVirtualization }
 
-        if ($install_adk) { Install-WingetRange $adk }
+        if ($InstallWingetAdk) { Install-WingetRange $WingetAdk }
     
     }
 
 } else { Write-Host('--- Package installation bypassed ---') }
 
-if ($rename_computer) {
+# match sn hash in LUT for defined hostname
+# so I don't have to post serial numbers in public repo (not that it matters)
+# TODO: this should work, but is untested - 7/25/2024
+if ($RenameComputer) {
 
-    # match hash of device S/Ns in a hash table ($machines) with friendly names - not posting my S/Ns on github
+    $SerialNumber = Get-Hash `
+        -text (Get-WmiObject win32_bios | Select-Object SerialNumber) `
+        -algorithm SHA256
 
-    # get SHA256 from the serial number
-    # TODO: 24H2 does not have wmic
-    # replace with get-cmiobject
-    $device_serial = Get-Hash -text (WMIC.exe bios get serialnumber) -algorithm SHA256
-
-    # match in LUT for friendly name
-    Rename-Computer 'liam-$($machines[$device_serial])'
+    Rename-Computer $Machines[$SerialNumber]
 
 }
 
