@@ -1,15 +1,21 @@
-# launch PowerShell with:
-# PowerShell -ExecutionPolicy Unrestricted
+#Requires -RunAsAdministrator
+<#
+    .SYNOPSIS
+    Installs applications and configures a base Windows system for use.
 
+    .DESCRIPTION
+    
+    .NOTES
+#>
 param(
 
     # TODO: point Winget installer at this directory
-    [System.IO.DirectoryInfo]$WorkingPath = 'C:\tmp\wpinst',
-    # install .NET 3.5 (3.0, 2.0)
+    [System.IO.DirectoryInfo]$WorkingDirectory = 'C:\tmp\installer',
 
     # TODO: implement
     [Boolean]$EncryptDisks = 1,
 
+    # install .NET 3.5 (3.0, 2.0)
     [Boolean]$InstallDotNet3 = 1,
 
     # enable the Hyper-V hypervisor environment
@@ -195,329 +201,354 @@ param(
                 [Array]$Dell = @('Dell.CommandUpdate')
 
 )
+BEGIN{
+    # https://learn.microsoft.com/en-us/windows/package-manager/winget/
+    function Install-Winget {
 
-# https://learn.microsoft.com/en-us/windows/package-manager/winget/
-function Install-Winget {
+        $StartingDirectory = Get-Location
+        Set-Location $WorkingDirectory
 
-    $progressPreference = 'silentlyContinue'
+        $progressPreference = 'silentlyContinue'
 
-    # TODO: clean this up a bit, cut line count down
-    
-    Invoke-WebRequest `
-        -Uri 'https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx' `
-        -OutFile 'Microsoft.VCLibs.x64.14.00.Desktop.appx'
-
-    Add-AppxPackage `
-        -Path 'Microsoft.VCLibs.x64.14.00.Desktop.appx'
-
-    Invoke-WebRequest `
-        -Uri 'https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx' `
-        -OutFile 'Microsoft.UI.Xaml.2.8.x64.appx'
-
-    Add-AppxPackage `
-        -Path 'Microsoft.UI.Xaml.2.8.x64.appx'
-
-    Invoke-WebRequest `
-        -Uri 'https://aka.ms/getwinget' `
-        -OutFile 'Microsoft.DesktopAppInstaller.msixbundle'
-
-    Add-AppxPackage `
-        -Path 'Microsoft.DesktopAppInstaller.msixbundle'
-
-}
-
-function Install-WingetRange {
-
-    [CmdletBinding()]
-    param (
-        [Array]$winget_ids
-    )
-
-    foreach ($winget_id in $winget_ids) {
-        winget install $winget_id
-    }
-
-}
-
-function Install-ScoopRange {
-
-    [CmdletBinding()]
-    param (
-        [Array]$ScoopPackages
-    )
-
-    foreach ($ScoopPackage in $ScoopPackages) {
-        scoop install $ScoopPackage
-    }
-
-}
-
-function Add-ScoopBucketRange {
-
-    [CmdletBinding()]
-    param (
-        [Array]$ScoopBuckets
-    )
-
-    foreach ($ScoopBucket in $ScoopBuckets) {
-        scoop bucket add $ScoopBucket
-    }
-
-}
-
-Function New-RegistryKey {
-
-    param (
-        [String]$KeyPath
-    )
-
-    if (-not (Test-Path -Path $KeyPath)) {
-
-        New-Item `
-            -Path $KeyPath `
-            -Force
-
-    }
-
-}
-
-function Set-RegistryValue {
-
-    [CmdletBinding()]
-    param (
-        [String]$KeyPath,
-        [String]$ValueName,
-        [String]$ValueType,
-        [int]$Value
-    )
-
-    # splat these so they're reused
-    $PathAndValueName = @{
-        Path = $KeyPath
-        Name = $ValueName
-    }
-    # if exists set value
-    if (Get-ItemProperty @PathAndValueName) {
-        Set-ItemProperty @PathAndValueName -Value $Value -Force
-    } else { # if not exists create value
-        New-ItemProperty @PathAndValueName -Type $ValueType -Value $Value
-    }
-
-}
-
-Function Get-Hash {
-    
-    param (
-        [String]$Text,
-        [String]$Algorithm = 'md5'
-    )
-
-    Return Get-FileHash `
-        -InputStream ([IO.MemoryStream]::new([byte[]][char[]]$Text)) `
-        -Algorithm $Algorithm
-
-}
-
-# basics
-Set-TimeZone -Name 'Eastern Standard Time'
-
-if ($UseRegistryTweaks) {
-
-    # show taskbar on all (1, default) or main (0) monitor(s)
-
-    $MultiMonitorTaskbarMode = @{
-        KeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
-        ValueName = 'MMTaskbarEnabled'
-        ValueType = 'DWord'
-        Value = if ($TaskbarSingleMonitor) { 0 } else { 1 }
-    }
-
-    # show (1, default) or hide (0) the search box on the taskbar
-
-    $SearchBoxTaskbarMode = @{
-        KeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Search'
-        ValueName = 'SearchBoxTaskbarMode'
-        ValueType = 'DWord'
-        Value = if ($TaskbarHideSearch) { 0 } else { 1 }
-    }
-
-    # show (1, default) or hide (0) the task view button on the taskbar
-
-    $ShowTaskViewButton = @{
-        KeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
-        ValueName = 'ShowTaskViewButton'
-        ValueType = 'DWord'
-        Value = if ($TaskbarHideTaskview) { 0 } else { 1 }
-    }
-
-    # create a registry key to disable the new Windows 11 context menu
-
-    if ($SimpleContextMenu) {
-
-        New-RegistryKey `
-            -KeyPath = 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32'
-
-        Set-RegistryValue `
-            -KeyPath 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32' `
-            -ValueName '(Default)' `
-            -ValueType String `
-            -Value '' `
+        # TODO: clean this up a bit, cut line count down
         
+        Invoke-WebRequest `
+            -Uri 'https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx' `
+            -OutFile 'Microsoft.VCLibs.x64.14.00.Desktop.appx'
+
+        Add-AppxPackage `
+            -Path 'Microsoft.VCLibs.x64.14.00.Desktop.appx'
+
+        Invoke-WebRequest `
+            -Uri 'https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx' `
+            -OutFile 'Microsoft.UI.Xaml.2.8.x64.appx'
+
+        Add-AppxPackage `
+            -Path 'Microsoft.UI.Xaml.2.8.x64.appx'
+
+        Invoke-WebRequest `
+            -Uri 'https://aka.ms/getwinget' `
+            -OutFile 'Microsoft.DesktopAppInstaller.msixbundle'
+
+        Add-AppxPackage `
+            -Path 'Microsoft.DesktopAppInstaller.msixbundle'
+
+        Set-Location $StartingDirectory
+
     }
 
-    # disable link-local multicast name resolution (LLMNR), which forces the use of a DNS server
-    # TODO: use wrapper functions New-RegistryKey and Set-RegistryValue like context menu
-    # or, if possible, clean both up into one thing
-    if ($DisableLlmnr) {
+<#   
+    function Install-Range {
+        [CmdletBinding()]
+        param (
+            [command]$InputFunction,
+            [Array]$InputArray        
+        )
 
-        New-Item `
-            -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT' `
-            -Name 'DNSClient' `
-            -Force $true
+        foreach ($InputObject in $InputArray) {
+            $InputFunction install $InputObject
+        }
+    }
+    #>
 
-        New-ItemProperty `
-            -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient' `
-            -Name 'EnableMultiCast' `
-            -PropertyType 'DWORD' `
-            -Value 0 `
-            -Force $true
+    function Install-WingetRange {
+
+        [CmdletBinding()]
+        param (
+            [Array]$WingetPackages
+        )
+
+        foreach ($WingetPackage in $WingetPackages) {
+            winget install $WingetPackage
+        }
 
     }
 
-    [Array]$RegistryValues = @(
+    function Install-ScoopRange {
 
-        $MultiMonitorTaskbarMode
-        $SearchBoxTaskbarMode
-        $ShowTaskViewButton
+        [CmdletBinding()]
+        param (
+            [Array]$ScoopPackages
+        )
+
+        foreach ($ScoopPackage in $ScoopPackages) {
+            scoop install $ScoopPackage
+        }
+
+    }
+
+    function Add-ScoopBucketRange {
+
+        [CmdletBinding()]
+        param (
+            [Array]$ScoopBuckets
+        )
+
+        foreach ($ScoopBucket in $ScoopBuckets) {
+            scoop bucket add $ScoopBucket
+        }
+
+    }
+
+    Function New-RegistryKey {
+
+        param (
+            [String]$KeyPath
+        )
+
+        if (-not (Test-Path -Path $KeyPath)) {
+
+            New-Item `
+                -Path $KeyPath `
+                -Force
+
+        }
+
+    }
+
+    function Set-RegistryValue {
+
+        [CmdletBinding()]
+        param (
+            [String]$KeyPath,
+            [String]$ValueName,
+            [String]$ValueType,
+            [int]$Value
+        )
+
+        # splat these so they're reused
+        $PathAndValueName = @{
+            Path = $KeyPath
+            Name = $ValueName
+        }
+        # if exists set value
+        if (Get-ItemProperty @PathAndValueName) {
+            Set-ItemProperty @PathAndValueName -Value $Value -Force
+        } else { # if not exists create value
+            New-ItemProperty @PathAndValueName -Type $ValueType -Value $Value
+        }
+
+    }
+
+    Function Get-Hash {
         
-    )
+        param (
+            [String]$Text,
+            [String]$Algorithm = 'md5'
+        )
 
-    Foreach ($RegistryValue in $RegistryValues) { Set-RegistryValue @RegistryValue }
+        Return Get-FileHash `
+            -InputStream ([IO.MemoryStream]::new([byte[]][char[]]$Text)) `
+            -Algorithm $Algorithm
 
-    # kill Explorer (it will restart) to apply changes immediately
-    Stop-Process -Name Explorer -Force
+    }
+    }PROCESS{
+    # basics
+    Set-TimeZone -Name 'Eastern Standard Time'
 
-}
+    if ($UseRegistryTweaks) {
 
-# Windows tweaks: disable Netbios - this will only disable Netbios on adapters that are currently up
-# TODO: spawn a script on network adapter change to kill netbios?
-# (Get-WmiObject Win32_NetworkAdapterConfiguration -Filter IpEnabled='true').SetTcpipNetbios(2)
+        # show taskbar on all (1, default) or main (0) monitor(s)
+        # set CLRF=0 in HKCU\Software\Microsoft\Telnet
 
-if ($EnableHyperV) {
-    
-    Enable-WindowsOptionalFeature `
-        -Online `
-        -FeatureName Microsoft-Hyper-V `
-        -All # -IncludeManagementTools
+        $MultiMonitorTaskbarMode = @{
+            KeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+            ValueName = 'MMTaskbarEnabled'
+            ValueType = 'DWord'
+            Value = if ($TaskbarSingleMonitor) { 0 } else { 1 }
+        }
 
-    if ($InstallDockerCe) {
+        # show (1, default) or hide (0) the search box on the taskbar
 
-        # this reboots the computer unprompted in the middle of the script
-        # thanks Microsoft
-        # TODO: fix before implementing
+        $SearchBoxTaskbarMode = @{
+            KeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Search'
+            ValueName = 'SearchBoxTaskbarMode'
+            ValueType = 'DWord'
+            Value = if ($TaskbarHideSearch) { 0 } else { 1 }
+        }
 
-        <#
-            Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/microsoft/Windows-Containers/Main/helpful_tools/Install-DockerCE/install-docker-ce.ps1' -o install-docker-ce.ps1
-            .\install-docker-ce.ps1
+        # show (1, default) or hide (0) the task view button on the taskbar
+
+        $ShowTaskViewButton = @{
+            KeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+            ValueName = 'ShowTaskViewButton'
+            ValueType = 'DWord'
+            Value = if ($TaskbarHideTaskview) { 0 } else { 1 }
+        }
+
+        # create a registry key to disable the new Windows 11 context menu
+
+        if ($SimpleContextMenu) {
+
+            New-RegistryKey `
+                -KeyPath = 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32'
+
+            Set-RegistryValue `
+                -KeyPath 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32' `
+                -ValueName '(Default)' `
+                -ValueType String `
+                -Value '' `
             
-        #>
-        
+        }
+
+        # disable link-local multicast name resolution (LLMNR), which forces the use of a DNS server
+        # TODO: use wrapper functions New-RegistryKey and Set-RegistryValue like context menu
+        # or, if possible, clean both up into one thing
+        if ($DisableLlmnr) {
+
+            New-Item `
+                -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT' `
+                -Name 'DNSClient' `
+                -Force $true
+
+            New-ItemProperty `
+                -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient' `
+                -Name 'EnableMultiCast' `
+                -PropertyType 'DWORD' `
+                -Value 0 `
+                -Force $true
+
+        }
+
+        [Array]$RegistryValues = @(
+
+            $MultiMonitorTaskbarMode
+            $SearchBoxTaskbarMode
+            $ShowTaskViewButton
+            
+        )
+
+        Foreach ($RegistryValue in $RegistryValues) { Set-RegistryValue @RegistryValue }
+
+        # kill Explorer (it will restart) to apply changes immediately
+        Stop-Process -Name Explorer -Force
+
     }
 
-    if ($InstallWsl) {
+    # Windows tweaks: disable Netbios - this will only disable Netbios on adapters that are currently up
+    # TODO: spawn a script on network adapter change to kill netbios?
+    # (Get-WmiObject Win32_NetworkAdapterConfiguration -Filter IpEnabled='true').SetTcpipNetbios(2)
 
-        # without explicitly adding VMP, VMP is not enabled
-        # and first WSL boot fails. Not sure why that is.
+    if ($EnableHyperV) {
+        
         Enable-WindowsOptionalFeature `
             -Online `
-            -FeatureName 'VirtualMachinePlatform'
+            -FeatureName Microsoft-Hyper-V `
+            -All # -IncludeManagementTools
 
-        wsl.exe `
-            --install `
-            -d $WslDistro
+        if ($InstallDockerCe) {
 
-    }
-    
+            # this reboots the computer unprompted in the middle of the script
+            # thanks Microsoft
+            # TODO: fix before implementing
 
-    if ($InstallWindowsSandbox) {
+            <#
+                Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/microsoft/Windows-Containers/Main/helpful_tools/Install-DockerCE/install-docker-ce.ps1' -o install-docker-ce.ps1
+                .\install-docker-ce.ps1
+                
+            #>
+            
+        }
 
-        Write-Host('+++ Enabling Windows Sandbox +++')
+        if ($InstallWsl) {
 
-        Enable-WindowsOptionalFeature `
-            -FeatureName 'Containers-DisposableClientVM' `
-            -Online `
-            -NoRestart `
-            -ErrorAction Stop
+            # without explicitly adding VMP, VMP is not enabled
+            # and first WSL boot fails. Not sure why that is.
+            Enable-WindowsOptionalFeature `
+                -Online `
+                -FeatureName 'VirtualMachinePlatform'
 
-    }
+            wsl.exe `
+                --install `
+                -d $WslDistro
 
-}
-
-if ($InstallPrograms) {
-
-    Write-Host('+++ Installing applications +++')
-
-    if ($InstallScoop) {
+        }
         
-        Write-Host('+++ pre-install for Scoop - check if it already exists +++')
-    
-        if ( -not [bool](Get-Command scoop)) {
-    
-            Write-Host('+++ Scoop not found. Installing the Scoop package manager +++')
-            Invoke-Expression '& {$(Invoke-RestMethod get.scoop.sh)} -RunAsAdmin' -ErrorVariable ScoopErrVar -ErrorAction Inquire
-    
-        } else { Write-Host('+++ Scoop was found. Skipping installation +++') }
-    
-        # install the Scoop packages necessary to add buckets
-        Install-ScoopRange($ScoopEarlyDeps)
-        # add Scoop repos (buckets)
-        Add-ScoopBucketRange($ScoopBuckets)
-        # install the Scoop packages we want
-        Install-ScoopRange($ScoopUtilities)
-        Install-ScoopRange($ScoopLangs)
-    
-    } else { Write-Host('--- Skipping development group ---') }
-    
-    # Install apps with the winget package manager
-    if ($UseWinget) {
-    
-        if (-not (Get-Command winget.exe)) { Install-Winget }
-    
-        Write-Host('+++ Beginning installation of Winget and Windows Store apps. +++')
 
-        Install-WingetRange $WingetDependencies
-    
-        if ($InstallWingetProductivity) { Install-WingetRange $WingetProductivity }
-    
-        if ($InstallWingetUtilities) { Install-WingetRange $WingetUtilities }
-    
-        if ($InstallWingetDevtools) { Install-WingetRange $WingetDevtools }
-    
-        if ($InstallWingetExtras) { Install-WingetRange $WingetExtras } 
-    
-        if ($InstallWingetNetworking) { Install-WingetRange $WingetNetworking }
+        if ($InstallWindowsSandbox) {
 
-        if ($InstallWingetCliTools) { Install-WingetRange $WingetCliTools }
+            Write-Host('+++ Enabling Windows Sandbox +++')
 
-        if ($InstallWingetVirtualization) { Install-WingetRange $WingetVirtualization }
+            Enable-WindowsOptionalFeature `
+                -FeatureName 'Containers-DisposableClientVM' `
+                -Online `
+                -NoRestart `
+                -ErrorAction Stop
 
-        if ($InstallWingetAdk) { Install-WingetRange $WingetAdk }
-    
+        }
+
     }
 
-} else { Write-Host('--- Package installation bypassed ---') }
+    if ($InstallPrograms) {
 
-# match sn hash in LUT for defined hostname
-# so I don't have to post serial numbers in public repo (not that it matters)
-# TODO: this should work, but is untested - 7/25/2024
-if ($RenameComputer) {
+        Write-Host('+++ Installing applications +++')
 
-    $SerialNumber = Get-Hash `
-        -text (Get-WmiObject win32_bios | Select-Object SerialNumber) `
-        -algorithm SHA256
+        if ($InstallScoop) {
+            
+            Write-Host('+++ pre-install for Scoop - check if it already exists +++')
+        
+            if ( -not [bool](Get-Command scoop)) {
+        
+                Write-Host('+++ Scoop not found. Installing the Scoop package manager +++')
+                Invoke-Expression '& {$(Invoke-RestMethod get.scoop.sh)} -RunAsAdmin' -ErrorVariable ScoopErrVar -ErrorAction Inquire
+        
+            } else { Write-Host('+++ Scoop was found. Skipping installation +++') }
+        
+            # install the Scoop packages necessary to add buckets
+            Install-ScoopRange($ScoopEarlyDeps)
+            # add Scoop repos (buckets)
+            Add-ScoopBucketRange($ScoopBuckets)
+            # install the Scoop packages we want
+            Install-ScoopRange($ScoopUtilities)
+            Install-ScoopRange($ScoopLangs)
+        
+        } else { Write-Host('--- Skipping development group ---') }
+        
+        # Install apps with the winget package manager
+        if ($UseWinget) {
+        
+            if (-not (Get-Command winget.exe)) { Install-Winget }
+        
+            Write-Host('+++ Beginning installation of Winget and Windows Store apps. +++')
 
-    Rename-Computer $Machines[$SerialNumber]
+            Install-WingetRange $WingetDependencies
+        
+            if ($InstallWingetProductivity) { Install-WingetRange $WingetProductivity }
+        
+            if ($InstallWingetUtilities) { Install-WingetRange $WingetUtilities }
+        
+            if ($InstallWingetDevtools) { Install-WingetRange $WingetDevtools }
+        
+            if ($InstallWingetExtras) { Install-WingetRange $WingetExtras } 
+        
+            if ($InstallWingetNetworking) { Install-WingetRange $WingetNetworking }
 
+            if ($InstallWingetCliTools) { Install-WingetRange $WingetCliTools }
+
+            if ($InstallWingetVirtualization) { Install-WingetRange $WingetVirtualization }
+
+            if ($InstallWingetAdk) { Install-WingetRange $WingetAdk }
+        
+        }
+
+    } else { Write-Host('--- Package installation bypassed ---') }
+
+    # TODO: clean this up
+    dism /online /Enable-Feature /FeatureName:TelnetClient
+
+    # match sn hash in LUT for defined hostname
+    # so I don't have to post serial numbers in public repo (not that it matters)
+    # TODO: this should work, but is untested - 7/25/2024
+    if ($RenameComputer) {
+
+        $SerialNumber = Get-Hash `
+            -text (Get-WmiObject win32_bios | Select-Object SerialNumber) `
+            -algorithm SHA256
+
+        Rename-Computer $Machines[$SerialNumber]
+
+    }
 }
-
-Exit 0
+END{
+    Exit 0
+}
