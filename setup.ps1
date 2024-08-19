@@ -188,7 +188,7 @@ param(
             # the Windows Assessment and Deployment toolkit.
             # I don't find myself needing this often.
             [Boolean]$InstallWingetAdk = 0,
-            [Array]$WingetAdk = @('Microsoft.WindowsWingetAdk'),
+            [Array]$WingetAdk = @('Microsoft.WindowsAdk'),
 
             # TODO: implement
             # Get-WmiObject win32_bios | Select Manufacturer
