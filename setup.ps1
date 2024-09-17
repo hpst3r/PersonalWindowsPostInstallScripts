@@ -51,6 +51,9 @@ param(
         # 1 - disables link-local multicast name resolution (LLMNR) (force DNS server)
         # 0 - keep LLMNR enabled (W11 default)
         [Boolean]$DisableLlmnr = 1,
+        # 1 - enables Fast Startup
+        # 0 - disables Fast Startup
+        [Boolean]$FastStartupEnabled = 0,
 
     # This is just scaffolding for now. TODO: Future features
     [Boolean]$SetGroupPolicy = 1,
@@ -376,6 +379,13 @@ BEGIN{
             Value = if ($TaskbarHideTaskview) { 0 } else { 1 }
         }
 
+        $FastStartup = @{
+            KeyPath = 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power'
+            ValueName = 'HiberbootEnabled'
+            ValueType = 'DWord'
+            Value = if ($FastStartupEnabled) { 1 } else { 0 }
+        }
+
         # create a registry key to disable the new Windows 11 context menu
 
         if ($SimpleContextMenu) {
@@ -415,6 +425,7 @@ BEGIN{
             $MultiMonitorTaskbarMode
             $SearchBoxTaskbarMode
             $ShowTaskViewButton
+            $FastStartup
             
         )
 
