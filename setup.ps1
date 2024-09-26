@@ -39,36 +39,58 @@ param(
         # 1 - display the taskbar on main screen only
         # 0 - display taskbar on all screens (W11 default)
         [Boolean]$TaskbarSingleMonitor = 1,
+
         # 1 - hide the Search box on the taskbar
         # 0 - show the Search box on the taskbar (W11 default)
         [Boolean]$TaskbarHideSearch = 1,
+
         # 1 - hide the Task View taskbar button
-        # 2 - show the Task View taskbar button (W11 default)
+        # 0 - show the Task View taskbar button (W11 default)
         [Boolean]$TaskbarHideTaskview = 1,
+
+        # Disable the new W11 context menu
         # 1 - force the W10 style 'more options' context menu on right click
-        # 0 - use the default W11 taskbar
+        # 0 - use the default W11 context menu, make no changes
         [Boolean]$SimpleContextMenu = 1,
-        # 1 - disables link-local multicast name resolution (LLMNR) (force DNS server)
-        # 0 - keep LLMNR enabled (W11 default)
+
+        # older method of link-local name resolution, should be removed in newer W11 builds (I think)
+        # 1 - disable LLMNR
+        # 0 - keep LLMNR enabled
         [Boolean]$DisableLlmnr = 1,
+
+        # Leaves hibernate enabled, just disables Hiberboot
         # 1 - enables Fast Startup
         # 0 - disables Fast Startup
         [Boolean]$FastStartupEnabled = 0,
 
-    # This is just scaffolding for now. TODO: Future features
+        # This is the 'shake to minimize everything' "feature"
+        # 1 - enables Aero Shake
+        # 0 - disables Aero Shake
+        [Boolean]$ShakeWindowsToMinimize = 0,
+
+        # The DNS Client service provides a DNS cache and registers the computer with DNS servers
+        # 1 - DNS cache DWORD 2 (Automatic) - default 'trigger start,' run the service
+        # 0 - DNS cache DWORD 4 (Disabled) - disable DNS Client service autostart
+        [Boolean]$DnsCacheEnabled = 1
+
+        # Disable adding Microsoft accounts.
+        # Default in 10 21H2 IOT LTSC - doesn't exist
+        # 1 - NoConnectedUser DWORD 3, can't add or sign in with a Microsoft account
+        # 0 - NoConnectedUser DWORD 0, allow Microsoft accounts
+        [Boolean]$DisableMicrosoftAccountSignIn = 1
+
+    # This is silly. Do this stuff with registry edits!
     [Boolean]$SetGroupPolicy = 1,
 
-        [Boolean]$DisableMicrosoftAccountSignIn = 1,
         [Boolean]$ForceWindowsHelloMfa = 1,
-        [Boolean]$ConfigureFirefox = 1,
+        [Boolean]$ConfigureChrome = 1,
         [Boolean]$DisableTransparency = 1,
-        [Boolean]$DisableAnimations = 0,
+        [Boolean]$DisableAnimations = 1,
         [Boolean]$DrawWindowsInMotion = 1,
 
     # This is also scaffolding. TODO: Future features
-    [Boolean]$SyncPersonalPowerShellFunctions = 1,
-    [Boolean]$RestoreVmTemplatesFromNetwork = 1,
-    [Boolean]$RestoreIsoImagesFromNetwork = 1,
+    [Boolean]$SyncPsProfile = 1,
+    [Boolean]$RestoreDataDriveFromBackup = 0,
     [Boolean]$InstallBackupJobs = 1,
 
     # rename the computer by hashing the serial number and using LUT below
@@ -240,7 +262,7 @@ BEGIN{
 
     }
 
-<#   
+    <#   
     function Install-Range {
         [CmdletBinding()]
         param (
@@ -386,46 +408,70 @@ BEGIN{
             Value = if ($FastStartupEnabled) { 1 } else { 0 }
         }
 
-        # create a registry key to disable the new Windows 11 context menu
+        $DisallowShaking = @{
+            KeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+            ValueName = 'DisallowShaking'
+            ValueType = 'DWord'
+            Value = if ($ShakeWindowsToMinimize) { 0 } else { 1 }
+        }
 
+        $DnsCache = @{
+            KeyPath = 'HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache'
+            ValueName = 'Start'
+            ValueType = 'DWord'
+            Value = if ($DnsCacheEnabled) { 2 } else { 4 }
+        }
+        
+        $NoConnectedUser = @{
+            KeyPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System'
+            ValueName = 'NoConnectedUser'
+            ValueType = 'DWord'
+            Value = if ($DisableMicrosoftAccountSignIn) { 3 } else { 0 }
+        }
+
+        # create a registry key to disable the new Windows 11 context menu
+        # TODO: condense DisableLlmnr and SimpleContextMenu
         if ($SimpleContextMenu) {
 
+            $KeyPath = 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32'
+
             New-RegistryKey `
-                -KeyPath = 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32'
+                -KeyPath = $KeyPath
 
             Set-RegistryValue `
-                -KeyPath 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32' `
+                -KeyPath $KeyPath `
                 -ValueName '(Default)' `
                 -ValueType String `
-                -Value '' `
+                -Value ''
             
         }
 
         # disable link-local multicast name resolution (LLMNR), which forces the use of a DNS server
-        # TODO: use wrapper functions New-RegistryKey and Set-RegistryValue like context menu
-        # or, if possible, clean both up into one thing
         if ($DisableLlmnr) {
 
-            New-Item `
-                -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT' `
-                -Name 'DNSClient' `
-                -Force $true
+            $KeyPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient'
 
-            New-ItemProperty `
-                -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient' `
-                -Name 'EnableMultiCast' `
-                -PropertyType 'DWORD' `
-                -Value 0 `
-                -Force $true
+            New-RegistryKey `
+                -KeyPath = $KeyPath
+
+            Set-RegistryValue `
+                -KeyPath = $KeyPath `
+                -ValueName = 'EnableMultiCast' `
+                -ValueType 'DWORD' `
+                -Value 0
 
         }
 
+        # list of splatted parameters to be passed to Set-RegistryValue one at a time
         [Array]$RegistryValues = @(
 
-            $MultiMonitorTaskbarMode
-            $SearchBoxTaskbarMode
-            $ShowTaskViewButton
-            $FastStartup
+            $MultiMonitorTaskbarMode # show or hide the taskbar on secondary displays
+            $SearchBoxTaskbarMode # show or hide the Search box on the taskbar
+            $ShowTaskViewButton # show or hide the Task View taskbar button
+            $FastStartup # set HiberbootEnabled
+            $DisallowShaking # enable or disable the Shake to Minimize feature
+            $DnsCache # set the autostart status of the DNS Client service
+            $NoConnectedUser # set if Microsoft accounts are allowed or not
             
         )
 
