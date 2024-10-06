@@ -71,13 +71,13 @@ param(
         # The DNS Client service provides a DNS cache and registers the computer with DNS servers
         # 1 - DNS cache DWORD 2 (Automatic) - default 'trigger start,' run the service
         # 0 - DNS cache DWORD 4 (Disabled) - disable DNS Client service autostart
-        [Boolean]$DnsCacheEnabled = 1
-
+        [Boolean]$DnsCacheEnabled = 1,
+        
         # Disable adding Microsoft accounts.
         # Default in 10 21H2 IOT LTSC - doesn't exist
         # 1 - NoConnectedUser DWORD 3, can't add or sign in with a Microsoft account
         # 0 - NoConnectedUser DWORD 0, allow Microsoft accounts
-        [Boolean]$DisableMicrosoftAccountSignIn = 1
+        [Boolean]$DisableMicrosoftAccountSignIn = 1,
 
     # This is silly. Do this stuff with registry edits!
     [Boolean]$SetGroupPolicy = 1,
