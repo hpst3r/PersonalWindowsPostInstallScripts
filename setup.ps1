@@ -401,12 +401,16 @@ BEGIN{
             Value = if ($TaskbarHideTaskview) { 0 } else { 1 }
         }
 
+        # enable (1, default) or disable (0) Fast Startup
+
         $FastStartup = @{
             KeyPath = 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power'
             ValueName = 'HiberbootEnabled'
             ValueType = 'DWord'
             Value = if ($FastStartupEnabled) { 1 } else { 0 }
         }
+
+        # enable (0, default) or disable (1) Shake to Minimize
 
         $DisallowShaking = @{
             KeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
@@ -415,12 +419,16 @@ BEGIN{
             Value = if ($ShakeWindowsToMinimize) { 0 } else { 1 }
         }
 
+        # enable (2, default) or disable (4) the Windows DNS Client DNS cache
+
         $DnsCache = @{
             KeyPath = 'HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache'
             ValueName = 'Start'
             ValueType = 'DWord'
             Value = if ($DnsCacheEnabled) { 2 } else { 4 }
         }
+
+        # allow (0, default) or disallow (3) Microsoft accounts on this PC
         
         $NoConnectedUser = @{
             KeyPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System'
@@ -430,37 +438,22 @@ BEGIN{
         }
 
         # create a registry key to disable the new Windows 11 context menu
-        # TODO: condense DisableLlmnr and SimpleContextMenu
-        if ($SimpleContextMenu) {
 
-            $KeyPath = 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32'
-
-            New-RegistryKey `
-                -KeyPath = $KeyPath
-
-            Set-RegistryValue `
-                -KeyPath $KeyPath `
-                -ValueName '(Default)' `
-                -ValueType String `
-                -Value ''
-            
+        $InprocServerOldContextMenu = @{
+            KeyPath = 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32'
+            ValueName = '(Default)'
+            ValueType = 'String'
+            Value = ''
         }
 
         # disable link-local multicast name resolution (LLMNR), which forces the use of a DNS server
-        if ($DisableLlmnr) {
-
-            $KeyPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient'
-
-            New-RegistryKey `
-                -KeyPath = $KeyPath
-
-            Set-RegistryValue `
-                -KeyPath = $KeyPath `
-                -ValueName = 'EnableMultiCast' `
-                -ValueType 'DWORD' `
-                -Value 0
-
+        $DNSClientMulticastResolution = @{
+            KeyPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient'
+            ValueName = 'EnableMultiCast'
+            ValueType = 'DWORD'
+            Value = 0
         }
+
 
         # list of splatted parameters to be passed to Set-RegistryValue one at a time
         [Array]$RegistryValues = @(
@@ -472,6 +465,8 @@ BEGIN{
             $DisallowShaking # enable or disable the Shake to Minimize feature
             $DnsCache # set the autostart status of the DNS Client service
             $NoConnectedUser # set if Microsoft accounts are allowed or not
+            if ($SimpleContextMenu) {$InprocServerOldContextMenu}
+            if ($DisableLlmnr) {$DNSClientMulticastResolution}
             
         )
 
@@ -492,6 +487,15 @@ BEGIN{
             -Online `
             -FeatureName Microsoft-Hyper-V `
             -All # -IncludeManagementTools
+
+        <#
+        # ConfigureHyperV params are declared at the beginning of the script
+        if ($ConfigureHyperV) {
+
+            Set-VMHost -VirtualHardDiskPath $HyperVVhdxPath
+            Set-VMHost -VirtualMachinePath $HyperVVmcfgPath
+        }
+        #>
 
         if ($InstallDockerCe) {
 
