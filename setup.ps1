@@ -486,7 +486,8 @@ BEGIN{
         Enable-WindowsOptionalFeature `
             -Online `
             -FeatureName Microsoft-Hyper-V `
-            -All # -IncludeManagementTools
+            -All ` # -IncludeManagementTools
+            -NoRestart
 
         <#
         # ConfigureHyperV params are declared at the beginning of the script
@@ -517,7 +518,8 @@ BEGIN{
             # and first WSL boot fails. Not sure why that is.
             Enable-WindowsOptionalFeature `
                 -Online `
-                -FeatureName 'VirtualMachinePlatform'
+                -FeatureName 'VirtualMachinePlatform' `
+                -NoRestart
 
             wsl.exe `
                 --install `
