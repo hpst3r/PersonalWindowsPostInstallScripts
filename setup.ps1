@@ -1,232 +1,9 @@
 #Requires -RunAsAdministrator
 <#
     .SYNOPSIS
-    Installs applications and configures a base Windows system for use.
-
-    .DESCRIPTION
-    
-    .NOTES
+    Installs applications, features and registry tweaks. For a full manifest, see config.json.
 #>
-param(
-
-    # TODO: point Winget installer at this directory
-    [System.IO.DirectoryInfo]$WorkingDirectory = 'C:\tmp\installer',
-
-    # TODO: implement
-    [Boolean]$EncryptDisks = 1,
-
-    # install .NET 3.5 (3.0, 2.0)
-    [Boolean]$InstallDotNet3 = 1,
-
-    # enable the Hyper-V hypervisor environment
-    [Boolean]$EnableHyperV = 1,
-        
-        # installs the Windows Subsystem for Linux and specified distro, or Debian
-        [Boolean]$InstallWsl = 1,
-
-            # my default is Debian
-            [String]$WslDistro = 'Debian',
-
-        # enables the Disposable Client VM feature
-        [Boolean]$InstallWindowsSandbox = 1,
-
-        # install the Docker Container Engine TODO: Fix
-        [Boolean]$InstallDockerCe = 0,
-
-    # make registry tweaks to adjust the performance and functionality of Windows
-    [Boolean]$UseRegistryTweaks = 1,
-
-        # 1 - display the taskbar on main screen only
-        # 0 - display taskbar on all screens (W11 default)
-        [Boolean]$TaskbarSingleMonitor = 1,
-
-        # 1 - hide the Search box on the taskbar
-        # 0 - show the Search box on the taskbar (W11 default)
-        [Boolean]$TaskbarHideSearch = 1,
-
-        # 1 - hide the Task View taskbar button
-        # 0 - show the Task View taskbar button (W11 default)
-        [Boolean]$TaskbarHideTaskview = 1,
-
-        # Disable the new W11 context menu
-        # 1 - force the W10 style 'more options' context menu on right click
-        # 0 - use the default W11 context menu, make no changes
-        [Boolean]$SimpleContextMenu = 1,
-
-        # older method of link-local name resolution, should be removed in newer W11 builds (I think)
-        # 1 - disable LLMNR
-        # 0 - keep LLMNR enabled
-        [Boolean]$DisableLlmnr = 1,
-
-        # Leaves hibernate enabled, just disables Hiberboot
-        # 1 - enables Fast Startup
-        # 0 - disables Fast Startup
-        [Boolean]$FastStartupEnabled = 0,
-
-        # This is the 'shake to minimize everything' "feature"
-        # 1 - enables Aero Shake
-        # 0 - disables Aero Shake
-        [Boolean]$ShakeWindowsToMinimize = 0,
-
-        # The DNS Client service provides a DNS cache and registers the computer with DNS servers
-        # 1 - DNS cache DWORD 2 (Automatic) - default 'trigger start,' run the service
-        # 0 - DNS cache DWORD 4 (Disabled) - disable DNS Client service autostart
-        [Boolean]$DnsCacheEnabled = 1,
-        
-        # Disable adding Microsoft accounts.
-        # Default in 10 21H2 IOT LTSC - doesn't exist
-        # 1 - NoConnectedUser DWORD 3, can't add or sign in with a Microsoft account
-        # 0 - NoConnectedUser DWORD 0, allow Microsoft accounts
-        [Boolean]$DisableMicrosoftAccountSignIn = 1,
-
-    # This is silly. Do this stuff with registry edits!
-    [Boolean]$SetGroupPolicy = 1,
-
-        [Boolean]$ForceWindowsHelloMfa = 1,
-        [Boolean]$ConfigureChrome = 1,
-        [Boolean]$DisableTransparency = 1,
-        [Boolean]$DisableAnimations = 1,
-        [Boolean]$DrawWindowsInMotion = 1,
-
-    # This is also scaffolding. TODO: Future features
-    [Boolean]$SyncPsProfile = 1,
-    [Boolean]$RestoreDataDriveFromBackup = 0,
-    [Boolean]$InstallBackupJobs = 1,
-
-    # rename the computer by hashing the serial number and using LUT below
-    [Boolean]$RenameComputer = 1,
-        
-        # where hash of hwid = friendly name:
-        [hashtable]$Machines = @{
-
-            'E059D9801FDE40FE35781C7C45D3C427D4C5CCADCFFF92854B9FCC998D2BC2AA' = 'liam-t14sg1a'
-            '4C25652AF622E1A1AA13053F25187960621D08EBD554C319AFB4EDB0B44E7588' = 'liam-p1g4'
-            '5EF84F905BCAEA90F3E2984D02085AE0CC76CF46BDC8BECCDAE3DFA621402D76' = 'liam-12900ks'
-
-        },
-    
-    # global on/off toggle to install apps with any package manager.
-    # the following True/False bindings apply to all InstallX boolean config switches.
-    # 1 - install applications
-    # 0 - do not install applications
-    [Boolean]$InstallPrograms = 1,
-
-        [Boolean]$InstallScoop = 1,
-
-            # thing needed to download Scoop buckets, and Git for some reason
-            # removing Git will probably break something
-            [Array]$ScoopEarlyDeps = @(
-                'git',
-                'aria2'),
-
-            # scoop repositories
-            [Array]$ScoopBuckets = @(
-                'java',
-                'extras',
-                'sysinternals'),
-
-            # programming languages to install with Scoop.
-            # I prefer to manage them this way vs Winget
-            [Array]$ScoopLangs = @(
-                'python',
-                'ruby',
-                'go',
-                'perl',
-                'nodejs',
-                'java/openjdk'),
-
-            # utilities to install with Scoop
-            # sudo is a prerequisite for something, I think. TODO: figure this out
-            [Array]$ScoopUtilities = @(
-                'sudo',
-                'curl',
-                'grep',
-                'sed',
-                'less',
-                'touch'), # sudo MUST come first
-
-        [Boolean]$UseWinget = 1,
-
-            # general dependencies wanted on any machine
-            [Array]$WingetDependencies = @(
-                'Microsoft.VCRedist.2015+.x64',
-                'Microsoft.VCRedist.2015+.x86'),
-
-            # Productivity and productivity adjacent applications
-            [Boolean]$InstallWingetProductivity = 1,
-            [Array]$WingetProductivity = @(
-                'Spotify.Spotify',
-                'Mozilla.Firefox.DeveloperEdition',
-                'Microsoft.Office',
-                'Notion.Notion'
-                'Obsidian.Obsidian',
-                'Microsoft.WindowsTerminal',
-                'JGraph.Draw'),
-
-            # System utilities and a password manager
-            [Boolean]$InstallWingetUtilities = 1,
-            [Array]$WingetUtilities = @(
-                '7zip.7zip',
-                'REALiX.HWiNFO',
-                'AgileBits.1Password'),
-
-            # Extra tools that I sometimes use and sometimes do not
-            # TODO: it would be neat if I could configure Powertoys in this script, too
-            [Boolean]$InstallWingetExtras = 1,
-            [Array]$WingetExtras = @(
-                'Nlitesoft.Nlite',
-                'SyncTrayzor.SyncTrayzor',
-                'Microsoft.PowerToys',
-                'Armin2208.WindowsAutoNightMode'),
-
-            # Basic development tools
-            # ...and Windows debugger because I crash my computers a lot
-            [Boolean]$InstallWingetDevtools = 1,
-            [Array]$WingetDevtools = @(
-                'Git.Git',
-                'GitHub.cli',
-                'Microsoft.VisualStudioCode',
-                'Microsoft.VisualStudioCode.CLI',
-                'Microsoft.PowerShell',
-                'Microsoft.WinDbg'),
-            
-            # utilities for troubleshooting networks
-            [Boolean]$InstallWingetNetworking = 1,
-            [Array]$WingetNetworking = @(
-                'Insecure.Npcap',
-                'WiresharkFoundation.Wireshark',
-                'PuTTY.PuTTY'), # easier than adding 5 args to openssh to connect to a 3560
-
-            # utilities related to virtualization
-            [Boolean]$InstallWingetVirtualization = 1,
-            [Array]$WingetVirtualization = @('Hashicorp.Vagrant'),
-
-            # command-line tools (text editor, ported GNU utilities maybe)
-            [Boolean]$InstallWingetCliTools = 1,
-            [Array]$WingetCliTools = @('Neovim.Neovim'),
-
-            # anything 3D design/3D printer related
-            # unfortunately, installing AutoCAD sucks
-            [Boolean]$InstallWingetCad = 1,
-            [Array]$WingetCad = @('UltiMaker.Cura'),
-
-            # the Windows Assessment and Deployment toolkit.
-            # I don't find myself needing this often.
-            [Boolean]$InstallWingetAdk = 0,
-            [Array]$WingetAdk = @('Microsoft.WindowsAdk'),
-
-            # TODO: implement
-            # Get-WmiObject win32_bios | Select Manufacturer
-            [Boolean]$InstallOemDriverTool = 1,
-                
-                # Lenovo Commercial Vantage
-                [Array]$Lenovo = @('9NR5B8GVVM13'),
-
-                # Dell Command | Update
-                [Array]$Dell = @('Dell.CommandUpdate')
-
-)
-BEGIN{
+BEGIN {
     # https://learn.microsoft.com/en-us/windows/package-manager/winget/
     function Install-Winget {
 
@@ -234,8 +11,6 @@ BEGIN{
         Set-Location $WorkingDirectory
 
         $progressPreference = 'silentlyContinue'
-
-        # TODO: clean this up a bit, cut line count down
         
         Invoke-WebRequest `
             -Uri 'https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx' `
@@ -262,29 +37,19 @@ BEGIN{
 
     }
 
-    <#   
-    function Install-Range {
-        [CmdletBinding()]
-        param (
-            [command]$InputFunction,
-            [Array]$InputArray        
-        )
-
-        foreach ($InputObject in $InputArray) {
-            $InputFunction install $InputObject
-        }
-    }
-    #>
-
-    function Install-WingetRange {
+    # TODO: add or remove elevation when required
+    # TODO: find a way to query ElevationRequirement
+    function Install-WingetPackages {
 
         [CmdletBinding()]
         param (
-            [Array]$WingetPackages
+            $WingetPackages
         )
 
         foreach ($WingetPackage in $WingetPackages) {
-            winget install $WingetPackage
+            Write-Host `
+            "+++ Installing package $($WingetPackage.PackageFriendlyName) +++"
+            winget install $WingetPackage.PackageId --accept-source-agreements --accept-package-agreements
         }
 
     }
@@ -315,22 +80,6 @@ BEGIN{
 
     }
 
-    Function New-RegistryKey {
-
-        param (
-            [String]$KeyPath
-        )
-
-        if (-not (Test-Path -Path $KeyPath)) {
-
-            New-Item `
-                -Path $KeyPath `
-                -Force
-
-        }
-
-    }
-
     function Set-RegistryValue {
 
         [CmdletBinding()]
@@ -338,19 +87,40 @@ BEGIN{
             [String]$KeyPath,
             [String]$ValueName,
             [String]$ValueType,
-            [int]$Value
+            $Value
         )
 
-        # splat these so they're reused
-        $PathAndValueName = @{
+        $PathNameValue = @{
             Path = $KeyPath
             Name = $ValueName
+            Value = $Value
         }
-        # if exists set value
-        if (Get-ItemProperty @PathAndValueName) {
-            Set-ItemProperty @PathAndValueName -Value $Value -Force
-        } else { # if not exists create value
-            New-ItemProperty @PathAndValueName -Type $ValueType -Value $Value
+
+        # if the registry key does not exist, create it and set desired value
+        if (-not (Test-Path -Path $KeyPath)) {
+
+            New-Item `
+                -Path $KeyPath `
+                -Force
+
+            New-ItemProperty `
+                @PathNameValue `
+                -PropertyType $ValueType
+
+
+            return Get-ItemProperty `
+                -Path $KeyPath `
+                -Name $ValueName
+        }
+
+        # if the key exists, just set the value
+        # if the value exists, just set it
+        if (Get-ItemProperty -Path $KeyPath -Name $ValueName) {
+            Set-ItemProperty @PathNameValue
+        } else { # if the value doesn't exist, create it
+            New-ItemProperty `
+                @PathNameValue `
+                -PropertyType $ValueType
         }
 
     }
@@ -367,78 +137,86 @@ BEGIN{
             -Algorithm $Algorithm
 
     }
-    }PROCESS{
+
+} PROCESS {
+
+    # load config.json to hashtable $params
+    # TODO: PS6 introduced -AsHashtable, so we need newer PS! Need to bootstrap script somehow
+    $params = Get-Content .\config.json | ConvertFrom-Json -AsHashtable
+
+    $WorkingDirectory = $params.WorkingDirectory
+
     # basics
-    Set-TimeZone -Name 'Eastern Standard Time'
 
-    if ($UseRegistryTweaks) {
+    # if the timezone requested exists, use it
+    Set-TimeZone `
+        -Name $(
+            if (Get-TimeZone $params.Timezone) {$params.Timezome}
+            else {"Eastern Standard Time"}
+        )
 
-        # show taskbar on all (1, default) or main (0) monitor(s)
+    if ($params.MakeRegistryTweaks) {
+
+        # TODO: why is the below edit necessary or desired? I forgot.
         # set CLRF=0 in HKCU\Software\Microsoft\Telnet
 
-        $MultiMonitorTaskbarMode = @{
+        # show taskbar on all (1, default) or main (0) monitor(s)
+        $ShowTaskbarPrimaryOnly = @{
             KeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
             ValueName = 'MMTaskbarEnabled'
             ValueType = 'DWord'
-            Value = if ($TaskbarSingleMonitor) { 0 } else { 1 }
+            Value = 0
         }
 
         # show (1, default) or hide (0) the search box on the taskbar
-
-        $SearchBoxTaskbarMode = @{
+        $HideTaskbarSearchBox = @{
             KeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Search'
             ValueName = 'SearchBoxTaskbarMode'
             ValueType = 'DWord'
-            Value = if ($TaskbarHideSearch) { 0 } else { 1 }
+            Value = 0
         }
 
         # show (1, default) or hide (0) the task view button on the taskbar
-
-        $ShowTaskViewButton = @{
+        $HideTaskViewButton = @{
             KeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
             ValueName = 'ShowTaskViewButton'
             ValueType = 'DWord'
-            Value = if ($TaskbarHideTaskview) { 0 } else { 1 }
+            Value = 0
         }
 
         # enable (1, default) or disable (0) Fast Startup
-
-        $FastStartup = @{
+        $DisableFastStartup = @{
             KeyPath = 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power'
             ValueName = 'HiberbootEnabled'
             ValueType = 'DWord'
-            Value = if ($FastStartupEnabled) { 1 } else { 0 }
+            Value = 0
         }
 
         # enable (0, default) or disable (1) Shake to Minimize
-
         $DisallowShaking = @{
             KeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
             ValueName = 'DisallowShaking'
             ValueType = 'DWord'
-            Value = if ($ShakeWindowsToMinimize) { 0 } else { 1 }
+            Value = 1
         }
 
         # enable (2, default) or disable (4) the Windows DNS Client DNS cache
-
-        $DnsCache = @{
+        $DisableLocalDnsCache = @{
             KeyPath = 'HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache'
             ValueName = 'Start'
             ValueType = 'DWord'
-            Value = if ($DnsCacheEnabled) { 2 } else { 4 }
+            Value = 4
         }
 
         # allow (0, default) or disallow (3) Microsoft accounts on this PC
-        
-        $NoConnectedUser = @{
+        $AllowNoConnectedUser = @{
             KeyPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System'
             ValueName = 'NoConnectedUser'
             ValueType = 'DWord'
-            Value = if ($DisableMicrosoftAccountSignIn) { 3 } else { 0 }
+            Value = 3
         }
 
         # create a registry key to disable the new Windows 11 context menu
-
         $InprocServerOldContextMenu = @{
             KeyPath = 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32'
             ValueName = '(Default)'
@@ -447,30 +225,147 @@ BEGIN{
         }
 
         # disable link-local multicast name resolution (LLMNR), which forces the use of a DNS server
-        $DNSClientMulticastResolution = @{
+        $DNSClientDisableMulticastResolution = @{
             KeyPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient'
             ValueName = 'EnableMultiCast'
             ValueType = 'DWORD'
             Value = 0
         }
 
+        # don't render window contents while dragging (displays an outline only)
+        $DisableRenderWindowsWhileDragging = @{
+            KeyPath = 'HKCU:\Control Panel\Desktop'
+            ValueName = 'DragFullWindows'
+            ValueType = 'String'
+            Value = '0'
+        }
+
+        # disable font smoothing (makes fonts ugly)
+        $DisableFontSmoothing = @{
+            KeyPath = 'HKCU:\Control Panel\Desktop'
+            ValueName = 'FontSmoothing'
+            ValueType = 'String'
+            Value = '0'
+        }
+
+        # disable drop shadows for desktop icon labels
+        $DisableDesktopIconShadows = @{
+            KeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+            ValueName = 'ListviewShadow'
+            ValueType = 'DWORD'
+            Value = 0
+        }
+
+        # disable window maximize and minimize animations
+        $DisableMaximizeMinimizeAnimations = @{
+            KeyPath = 'HKCU:\Control Panel\Desktop\WindowMetrics'
+            ValueName = 'MinAnimate'
+            ValueType = 'String'
+            Value = '0'
+        }
+        
+        # disable taskbar animations
+        $DisableTaskbarAnimations = @{
+            KeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+            ValueName = 'TaskbarAnimations'
+            ValueType = 'DWORD'
+            Value = 0
+        }
+
+        # disable Aero Peek
+        $DisableAeroPeek = @{
+            KeyPath = 'HKCU:\Software\Microsoft\Windows\DWM'
+            ValueName = 'EnableAeroPeek'
+            ValueType = 'DWORD'
+            Value = 0
+        }
+
+        # not sure exactly what thumbnails this affects, but it's in the Performance dialog.
+        $DisableThumbnails = @{
+            KeyPath = 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+            ValueName = 'IconsOnly'
+            ValueType = 'DWORD'
+            Value = 1
+        }
+
+        # disables the blue translucent rectangle thingy that's drawn when you select desktop icons
+        $DisableTranslucentDesktopSelectionPreview = @{
+            KeyPath = 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+            ValueName = 'ListviewAlphaSelect'
+            ValueType = 'DWORD'
+            Value = 0
+        }
+
+        # Set UserPreferencesMask to disable remaining Appearance features
+        $DisableOtherAppearanceOptions = @{
+            KeyPath = 'HKCU:\Control Panel\Desktop'
+            ValueName = 'UserPreferencesMask'
+            ValueType = 'Binary'
+            Value = [byte[]]@(0x90,0x12,0x03,0x80,0x10,0x00,0x00,0x00)
+        }
+
+        # boolean "tweak enabled" parameters to be used to build regkey array
+        $Desired = $params.RegistryTweaks
 
         # list of splatted parameters to be passed to Set-RegistryValue one at a time
-        [Array]$RegistryValues = @(
+        # prefer config file - if not found, default to 'performance' options
+        Foreach ($RegistryValue in @(
 
-            $MultiMonitorTaskbarMode # show or hide the taskbar on secondary displays
-            $SearchBoxTaskbarMode # show or hide the Search box on the taskbar
-            $ShowTaskViewButton # show or hide the Task View taskbar button
-            $FastStartup # set HiberbootEnabled
-            $DisallowShaking # enable or disable the Shake to Minimize feature
-            $DnsCache # set the autostart status of the DNS Client service
-            $NoConnectedUser # set if Microsoft accounts are allowed or not
-            if ($SimpleContextMenu) {$InprocServerOldContextMenu}
-            if ($DisableLlmnr) {$DNSClientMulticastResolution}
-            
-        )
+            if (-not $Desired.TaskbarSingleMonitor) {}
+            else {$ShowTaskbarPrimaryOnly}
 
-        Foreach ($RegistryValue in $RegistryValues) { Set-RegistryValue @RegistryValue }
+            if (-not $Desired.TaskbarSearchBoxDisabled) {}
+            else {$HideTaskbarSearchBox} 
+
+            if (-not $Desired.TaskbarTaskViewDisabled) {}
+            else {$HideTaskViewButton} 
+
+            if (-not $Desired.FastStartupDisabled) {}
+            else {$DisableFastStartup} 
+
+            if (-not $Desired.ShakeToMinimizeDisabled) {}
+            else {$DisallowShaking} 
+
+            if (-not $Desired.DnsCacheDisabled) {}
+            else {$DisableLocalDnsCache} 
+
+            if (-not $Desired.MicrosoftAccountsDisabled) {}
+            else {$AllowNoConnectedUser}
+
+            if (-not $Desired.$NewContextMenuDisabled) {}
+            else {$InprocServerOldContextMenu}
+
+            if (-not $Desired.LLMNRDisabled) {}
+            else {$DNSClientDisableMulticastResolution}
+
+            if (-not $Desired.RenderWindowsWhileDraggingDisabled) {}
+            else {$DisableRenderWindowsWhileDragging}
+
+            if ($Desired.FontSmoothingDisabled) {$DisableFontSmoothing}
+            else {} # treat this one differently because I want it enabled by default
+
+            if (-not $Desired.DesktopIconShadowsDisabled) {}
+            else {$DisableDesktopIconShadows}
+
+            if (-not $Desired.MaximizeMinimizeAnimationsDisabled) {}
+            else {$DisableMaximizeMinimizeAnimations}
+
+            if (-not $Desired.TaskbarAnimationsDisabled) {}
+            else {$DisableTaskbarAnimations}
+
+            if (-not $Desired.AeroPeekDisabled) {}
+            else {$DisableAeroPeek}
+
+            if (-not $Desired.ThumbnailsDisabled) {}
+            else {$DisableThumbnails}
+
+            if (-not $Desired.TranslucentDesktopSelectionDisabled) {}
+            else {$DisableTranslucentDesktopSelectionPreview}
+
+            if (-not $Desired.OtherAppearanceOptionsDisabled) {}
+            else {$DisableOtherAppearanceOptions}
+
+        )) {Set-RegistryValue @RegistryValue}
 
         # kill Explorer (it will restart) to apply changes immediately
         Stop-Process -Name Explorer -Force
@@ -481,54 +376,54 @@ BEGIN{
     # TODO: spawn a script on network adapter change to kill netbios?
     # (Get-WmiObject Win32_NetworkAdapterConfiguration -Filter IpEnabled='true').SetTcpipNetbios(2)
 
-    if ($EnableHyperV) {
+    if ($params.HyperV.Enabled) {
+
+        $HyperV = $params.HyperV
         
         Enable-WindowsOptionalFeature `
+            -NoRestart `
             -Online `
-            -FeatureName Microsoft-Hyper-V `
-            -All ` # -IncludeManagementTools
-            -NoRestart
+            -FeatureName 'Microsoft-Hyper-V' `
+            -All # -IncludeManagementTools
 
+        # VMP is required for WSL - without it, first boot fails
+        # probably best to just include it with Hyper-V, so we'll do that
+        Enable-WindowsOptionalFeature `
+            -NoRestart `
+            -Online `
+            -FeatureName 'VirtualMachinePlatform'
+
+        # set VHDX and vmcfg default PATHs
+        # TODO: this doesn't work until Hyper-V has been enabled & the system has been rebooted (I think)
         <#
-        # ConfigureHyperV params are declared at the beginning of the script
-        if ($ConfigureHyperV) {
+        if ($HyperV.Config.Modify) {
 
-            Set-VMHost -VirtualHardDiskPath $HyperVVhdxPath
-            Set-VMHost -VirtualMachinePath $HyperVVmcfgPath
+            # TODO: error handling if drive or folder doesn't exist
+            Set-VMHost -VirtualHardDiskPath $HyperV.Config.VhdxPath
+            Set-VMHost -VirtualMachinePath $HyperV.Config.FilePath
+
         }
         #>
 
-        if ($InstallDockerCe) {
+        if ($HyperV.InstallDockerCE) {
 
             # this reboots the computer unprompted in the middle of the script
             # thanks Microsoft
             # TODO: fix before implementing
-
             <#
                 Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/microsoft/Windows-Containers/Main/helpful_tools/Install-DockerCE/install-docker-ce.ps1' -o install-docker-ce.ps1
                 .\install-docker-ce.ps1
-                
             #>
-            
+        
         }
 
-        if ($InstallWsl) {
-
-            # without explicitly adding VMP, VMP is not enabled
-            # and first WSL boot fails. Not sure why that is.
-            Enable-WindowsOptionalFeature `
-                -Online `
-                -FeatureName 'VirtualMachinePlatform' `
-                -NoRestart
-
+        if ($HyperV.WSL.Enabled) {
             wsl.exe `
                 --install `
-                -d $WslDistro
-
+                -d $HyperV.WSL.Distro
         }
         
-
-        if ($InstallWindowsSandbox) {
+        if ($HyperV.WindowsSandbox.Enabled) {
 
             Write-Host('+++ Enabling Windows Sandbox +++')
 
@@ -542,62 +437,72 @@ BEGIN{
 
     }
 
-    if ($InstallPrograms) {
+    if ($params.Software.InstallSoftware) {
 
-        Write-Host('+++ Installing applications +++')
-
-        if ($InstallScoop) {
+        Write-Host `
+            '+++ Installing applications +++'
+        
+        $Scoop = $params.Software.Scoop
+        if ($Scoop.Enabled) {
             
-            Write-Host('+++ pre-install for Scoop - check if it already exists +++')
+            Write-Host `
+                '+++ pre-install for Scoop - check if it already exists +++'
         
             if ( -not [bool](Get-Command scoop)) {
         
-                Write-Host('+++ Scoop not found. Installing the Scoop package manager +++')
-                Invoke-Expression '& {$(Invoke-RestMethod get.scoop.sh)} -RunAsAdmin' -ErrorVariable ScoopErrVar -ErrorAction Inquire
+                Write-Host `
+                    '+++ Scoop not found. Installing the Scoop package manager +++'
+                Invoke-Expression `
+                    "& {$(Invoke-RestMethod https://get.scoop.sh)} -RunAsAdmin"
         
-            } else { Write-Host('+++ Scoop was found. Skipping installation +++') }
+            } else {
+                Write-Host `
+                    '+++ Scoop was found. Skipping installation +++'
+            }
         
             # install the Scoop packages necessary to add buckets
-            Install-ScoopRange($ScoopEarlyDeps)
+            Install-ScoopRange($Scoop.Packages.Dependencies)
             # add Scoop repos (buckets)
-            Add-ScoopBucketRange($ScoopBuckets)
-            # install the Scoop packages we want
-            Install-ScoopRange($ScoopUtilities)
-            Install-ScoopRange($ScoopLangs)
+            Add-ScoopBucketRange($Scoop.Buckets)
+            # install desired Scoop packages
+            Install-ScoopRange($Scoop.Packages.Utilities)
+            Install-ScoopRange($Scoop.Packages.Languages)
         
-        } else { Write-Host('--- Skipping development group ---') }
-        
-        # Install apps with the winget package manager
-        if ($UseWinget) {
-        
-            if (-not (Get-Command winget.exe)) { Install-Winget }
-        
-            Write-Host('+++ Beginning installation of Winget and Windows Store apps. +++')
-
-            Install-WingetRange $WingetDependencies
-        
-            if ($InstallWingetProductivity) { Install-WingetRange $WingetProductivity }
-        
-            if ($InstallWingetUtilities) { Install-WingetRange $WingetUtilities }
-        
-            if ($InstallWingetDevtools) { Install-WingetRange $WingetDevtools }
-        
-            if ($InstallWingetExtras) { Install-WingetRange $WingetExtras } 
-        
-            if ($InstallWingetNetworking) { Install-WingetRange $WingetNetworking }
-
-            if ($InstallWingetCliTools) { Install-WingetRange $WingetCliTools }
-
-            if ($InstallWingetVirtualization) { Install-WingetRange $WingetVirtualization }
-
-            if ($InstallWingetAdk) { Install-WingetRange $WingetAdk }
-        
+        } else {
+            Write-Host `
+                '--- Skipping installation of Scoop packages ---'
         }
 
-    } else { Write-Host('--- Package installation bypassed ---') }
+
+        $Winget = $params.Software.Winget
+        # Install apps with the winget package manager
+        if ($Winget.Enabled) {
+            
+            Install-Winget # workaround for 23H2 and older, just try to install it anyway, whatever, idc
+        
+            Write-Host `
+                '+++ Beginning installation of Winget and Windows Store apps. +++'
+
+            Install-WingetPackages $Winget.Dependencies.Packages
+            
+            # remove the Enabled and Dependencies pairs so it's simpler to iterate through
+            $Winget.Remove("Enabled")
+            $Winget.Remove("Dependencies")
+
+            foreach ($WingetCategory in $Winget) {
+                if ($WingetCategory.Enabled) {
+                    Install-WingetPackages $WingetCategory.Packages
+                }
+            }
+        }
+
+    } else {
+        Write-Host `
+            '--- Package installation bypassed ---'
+    }
 
     # TODO: clean this up
-    dism /online /Enable-Feature /FeatureName:TelnetClient
+    dism /online /Enable-Feature /FeatureName:TelnetClient /NoRestart
 
     # match sn hash in LUT for defined hostname
     # so I don't have to post serial numbers in public repo (not that it matters)
@@ -612,6 +517,6 @@ BEGIN{
 
     }
 }
-END{
-    Exit 0
+END {
+    exit 0
 }
