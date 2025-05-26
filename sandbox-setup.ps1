@@ -1,1 +1,0 @@
-.\setup.ps1 -enable_hyperv 0 -disable_llmnr 0

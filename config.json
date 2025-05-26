@@ -1,0 +1,331 @@
+{
+    "WorkingDirectory": "$env:TEMP",
+    "EncryptDisks": true,
+    "InstallDotNet3": true,
+    "EnableHyperV": true,
+    "TimeZone": "Eastern Standard Time",
+    "HyperV":
+    {
+        "Enabled": true,
+        "Config":
+        {
+            "Modify": true,
+            "FilePath": "D:/hv/vmcfg",
+            "VhdxPath": "D:/hv/vhdx"
+        },
+        "WindowsSandbox":
+        {
+            "Enabled": true
+        },
+        "InstallDockerCE": false,
+        "WSL":
+        {
+            "Enabled": true,
+            "Distro": "Debian"
+        }
+    },
+    "MakeRegistryTweaks": true,
+    "RegistryTweaks":
+    {
+        "TaskbarSingleMonitor": true,
+        "TaskbarSearchBoxDisabled": true,
+        "TaskbarTaskViewDisabled": true,
+        "TaskbarAlignLeft": true,
+        "NewContextMenuDisabled": true,
+        "LLMNRDisabled": true,
+        "FastStartupDisabled": true,
+        "ShakeToMinimizeDisabled": true,
+        "DnsCacheDisabled": true,
+        "MicrosoftAccountsDisabled": true,
+        "TransparencyDisabled": true,
+        "AnimationsDisabled": true,
+        "FontSmoothingDisabled": false,
+        "RenderWindowsWhileDraggingDisabled": true,
+        "DesktopIconShadowsDisabled": true,
+        "MaximizeMinimizeAnimationsDisabled": true,
+        "TaskbarAnimationsDisabled": true,
+        "AeroPeekDisabled": true,
+        "ThumbnailsDisabled": true,
+        "TranslucentDesktopSelectionDisabled": true,
+        "OtherAppearanceOptionsDisabled": true
+    },
+    "Software":
+    {
+        "InstallSoftware": true,
+        "Scoop":
+        {
+            "Enabled": true,
+            "Packages":
+            {
+                "Dependencies":
+                [
+                    "git",
+                    "aria2"
+                ],
+                "Languages":
+                [
+                    "python",
+                    "ruby",
+                    "go",
+                    "perl",
+                    "nodejs",
+                    "java/openjdk"
+                ],
+                "Utilities":
+                [
+                    "sudo",
+                    "curl",
+                    "grep",
+                    "sed",
+                    "less",
+                    "touch"
+                ]
+            },
+            "Buckets":
+            [
+                "java",
+                "extras",
+                "sysinternals"
+            ]
+        },
+        "Winget":
+        {
+            "Enabled": true,
+            "Dependencies":
+            {
+                "Packages":
+                [
+                    {
+                        "PackageFriendlyName": "Microsoft Visual C++ Redistributable 2015+ (x64)",
+                        "PackageId": "Microsoft.VCRedist.2015+.x64"
+                    },
+                    {
+                        "PackageFriendlyName": "Microsoft Visual C++ Redistributable 2015+ (x86)",
+                        "PackageId": "Microsoft.VCRedist.2015+.x86"
+                    }
+                ]
+            },
+            "Productivity":
+            {
+                "Enabled": true,
+                "Packages":
+                [
+                    {
+                        "PackageFriendlyName": "Spotify Music",
+                        "PackageId": "Spotify.Spotify"
+                    },
+                    {
+                        "PackageFriendlyName": "Mozilla Firefox Extended Support Release (ESR)",
+                        "PackageId": "Mozilla.Firefox.ESR"
+                    },
+                    {
+                        "PackageFriendlyName": "Mozilla Firefox Developer Edition",
+                        "PackageId": "Mozilla.Firefox.DeveloperEdition"
+                    },
+                    {
+                        "PackageFriendlyName": "Google Chrome",
+                        "PackageId": "Google.Chrome"
+                    },
+                    {
+                        "PackageFriendlyName": "Google Chrome (Dev)",
+                        "PackageId": "Google.Chrome.Dev"
+                    },
+                    {
+                        "PackageFriendlyName": "Google Chrome (Canary)",
+                        "PackageId": "Google.Chrome.Canary"
+                    },
+					{
+						"PackageFriendlyName": "Brave Browser",
+						"PackageId": "Brave.Brave"
+					},
+                    {
+                        "PackageFriendlyName": "Microsoft Office (365)",
+                        "PackageId": "Microsoft.Office"
+                    },
+                    {
+                        "PackageFriendlyName": "Obsidian Notes",
+                        "PackageId": "Obsidian.Obsidian"
+                    },
+                    {
+                        "PackageFriendlyName": "Microsoft Windows Terminal",
+                        "PackageId": "Microsoft.WindowsTerminal"
+                    },
+                    {
+                        "PackageFriendlyName": "draw.io",
+                        "PackageId": "JGraph.Draw"
+                    },
+                    {
+                        "PackageFriendlyName": "1Password",
+                        "PackageId": "AgileBits.1Password"
+                    }
+                ]
+            },
+            "Utilities":
+            {
+                "Enabled": true,
+                "Packages":
+                [
+                    {
+                        "PackageFriendlyName": "7-Zip",
+                        "PackageId": "7zip.7zip"
+                    },
+                    {
+                        "PackageFriendlyName": "HWiNFO64",
+                        "PackageId": "REALiX.HWiNFO"
+                    },
+                    {
+                        "PackageFriendlyName": "Neovim",
+                        "PackageId": "Neovim.Neovim"
+                    },
+					{
+						"PackageFriendlyName": "BitSum Process Lasso",
+						"PackageId": "BitSum.ProcessLasso"
+					},
+					{
+						"PackageFriendlyName": "FinalWire Aida64 Extreme",
+						"PackageId": "FinalWire.AIDA64.Extreme"
+					}
+                ]
+            },
+            "Extras":
+            {
+                "Enabled": true,
+                "Packages":
+                [
+                    {
+                        "PackageFriendlyName": "Microsoft PowerToys",
+                        "PackageId": "Microsoft.PowerToys"
+                    },
+					{
+						"PackageFriendlyName": "NuShell",
+						"PackageId": "Nushell.Nushell"
+					},
+					{
+						"PackageFriendlyName": "Starship (terminal prompt)",
+						"PackageId": "Starship.Starship"
+					}
+                ]
+            },
+            "Tools":
+            {
+                "Enabled": true,
+                "Packages":
+                [
+                    {
+                        "PackageFriendlyName": "Git",
+                        "PackageId": "Git.Git"
+                    },
+                    {
+                        "PackageFriendlyName": "GitHub CLI",
+                        "PackageId": "GitHub.cli"
+                    },
+                    {
+                        "PackageFriendlyName": "Microsoft Visual Studio Code",
+                        "PackageId": "Microsoft.VisualStudioCode"
+                    },
+                    {
+                        "PackageFriendlyName": "Microsoft Visual Studio Code (CLI)",
+                        "PackageId": "Microsoft.VisualStudioCode.CLI"
+                    },
+                    {
+                        "PackageFriendlyName": "Microsoft PowerShell Core",
+                        "PackageId": "Microsoft.PowerShell"
+                    },
+                    {
+                        "PackageFriendlyName": "WinDbg",
+                        "PackageId": "Microsoft.WinDbg"
+                    },
+                    {
+                        "PackageFriendlyName": "Nlite",
+                        "PackageId": "Nlitesoft.Nlite"
+                    },
+                    {
+                        "PackageFriendlyName": "SyncTrayzor (Syncthing utility)",
+                        "PackageId": "SyncTrayzor.SyncTrayzor"
+                    },
+                    {
+                        "PackageFriendlyName": "PuTTY",
+                        "PackageId": "PuTTY.PuTTY"
+                    },
+					{
+						"PackageFriendlyName": "CrystalDiskInfo",
+						"PackageId": "CrystalDewWorld.CrystalDiskInfo"
+					}
+                ]
+            },
+            "Networking":
+            {
+                "Enabled": true,
+                "Packages": [
+                    {
+                        "PackageFriendlyName": "Npcap",
+                        "PackageId": "Insecure.Npcap"
+                    },
+                    {
+                        "PackageFriendlyName": "Wireshark",
+                        "PackageId": "WiresharkFoundation.Wireshark"
+                    }
+                ]
+            },
+            "Virtualization":
+            {
+                "Enabled": true,
+                "Packages":
+                [
+                    {
+                        "PackageFriendlyName": "Hashicorp Vagrant",
+                        "PackageId": "Hashicorp.Vagrant"
+                    },
+                    {
+                        "PackageFriendlyName": "Hashicorp Terraform",
+                        "PackageId": "Hashicorp.Terraform"
+                    },
+                    {
+                        "PackageFriendlyName": "Hashicorp Packer",
+                        "PackageId": "Hashicorp.Packer"
+                    }
+                ]
+            },
+            "Cad":
+            {
+                "Enabled": true,
+                "Packages":
+                [
+                    {
+                        "PackageFriendlyName": "UltiMaker Cura",
+                        "PackageId": "UltiMaker.Cura"
+                    }
+                ]
+            },
+            "Adk":
+            {
+                "Enabled": true,
+                "Packages":
+                [
+                    {
+                        "PackageFriendlyName": "Microsoft Windows Assessment and Deployment Toolkit",
+                        "PackageId": "Microsoft.WindowsAdk"
+                    }
+                ]
+            },
+            "OemDriverTool": 
+            {
+                "Enabled": true,
+                "Lenovo":
+                [
+                    {
+                        "PackageFriendlyName": "Lenovo Commercial Vantage",
+                        "PackageId": "9NR5B8GVVM13"
+                    }
+                ],
+                "Dell":
+                [
+                    {
+                        "PackageFriendlyName": "Dell Command | Update",
+                        "PackageId": "Dell.CommandUpdate"
+                    }
+                ]
+            }
+        }
+    }
+}
