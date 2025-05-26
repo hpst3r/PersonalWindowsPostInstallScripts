@@ -1,9 +1,9 @@
 {
-    "WorkingDirectory": "C:/Temp",
+    "WorkingDirectory": "$env:TEMP",
     "EncryptDisks": true,
     "InstallDotNet3": true,
     "EnableHyperV": true,
-    "Timezone": "Eastern Standard Time",
+    "TimeZone": "Eastern Standard Time",
     "HyperV":
     {
         "Enabled": true,
@@ -101,7 +101,7 @@
                     },
                     {
                         "PackageFriendlyName": "Microsoft Visual C++ Redistributable 2015+ (x86)",
-                        "PackageName": "Microsoft.VCRedist.2015+.x86"
+                        "PackageId": "Microsoft.VCRedist.2015+.x86"
                     }
                 ]
             },
@@ -113,10 +113,6 @@
                     {
                         "PackageFriendlyName": "Spotify Music",
                         "PackageId": "Spotify.Spotify"
-                    },
-                    {
-                        "PackageFriendlyName": "Mozilla Firefox",
-                        "PackageId": "Mozilla.Firefox"
                     },
                     {
                         "PackageFriendlyName": "Mozilla Firefox Extended Support Release (ESR)",
@@ -138,6 +134,10 @@
                         "PackageFriendlyName": "Google Chrome (Canary)",
                         "PackageId": "Google.Chrome.Canary"
                     },
+					{
+						"PackageFriendlyName": "Brave Browser",
+						"PackageId": "Brave.Brave"
+					},
                     {
                         "PackageFriendlyName": "Microsoft Office (365)",
                         "PackageId": "Microsoft.Office"
@@ -176,7 +176,15 @@
                     {
                         "PackageFriendlyName": "Neovim",
                         "PackageId": "Neovim.Neovim"
-                    }
+                    },
+					{
+						"PackageFriendlyName": "BitSum Process Lasso",
+						"PackageId": "BitSum.ProcessLasso"
+					},
+					{
+						"PackageFriendlyName": "FinalWire Aida64 Extreme",
+						"PackageId": "FinalWire.AIDA64.Extreme"
+					}
                 ]
             },
             "Extras":
@@ -187,7 +195,15 @@
                     {
                         "PackageFriendlyName": "Microsoft PowerToys",
                         "PackageId": "Microsoft.PowerToys"
-                    }
+                    },
+					{
+						"PackageFriendlyName": "NuShell",
+						"PackageId": "Nushell.Nushell"
+					},
+					{
+						"PackageFriendlyName": "Starship (terminal prompt)",
+						"PackageId": "Starship.Starship"
+					}
                 ]
             },
             "Tools":
@@ -230,7 +246,11 @@
                     {
                         "PackageFriendlyName": "PuTTY",
                         "PackageId": "PuTTY.PuTTY"
-                    }
+                    },
+					{
+						"PackageFriendlyName": "CrystalDiskInfo",
+						"PackageId": "CrystalDewWorld.CrystalDiskInfo"
+					}
                 ]
             },
             "Networking":

@@ -7,33 +7,15 @@ BEGIN {
     # https://learn.microsoft.com/en-us/windows/package-manager/winget/
     function Install-Winget {
 
-        $StartingDirectory = Get-Location
-        Set-Location $WorkingDirectory
+        Write-Host "Installing WinGet PowerShell module from PSGallery..."
 
-        $progressPreference = 'silentlyContinue'
-        
-        Invoke-WebRequest `
-            -Uri 'https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx' `
-            -OutFile 'Microsoft.VCLibs.x64.14.00.Desktop.appx'
+        Install-PackageProvider -Name NuGet -Force
 
-        Add-AppxPackage `
-            -Path 'Microsoft.VCLibs.x64.14.00.Desktop.appx'
+        Install-Module -Name Microsoft.WinGet.Client -Force -Repository PSGallery
 
-        Invoke-WebRequest `
-            -Uri 'https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx' `
-            -OutFile 'Microsoft.UI.Xaml.2.8.x64.appx'
+        Write-Host "Using Repair-WinGetPackageManager cmdlet to bootstrap WinGet..."
 
-        Add-AppxPackage `
-            -Path 'Microsoft.UI.Xaml.2.8.x64.appx'
-
-        Invoke-WebRequest `
-            -Uri 'https://aka.ms/getwinget' `
-            -OutFile 'Microsoft.DesktopAppInstaller.msixbundle'
-
-        Add-AppxPackage `
-            -Path 'Microsoft.DesktopAppInstaller.msixbundle'
-
-        Set-Location $StartingDirectory
+        Repair-WinGetPackageManager
 
     }
 
@@ -43,7 +25,7 @@ BEGIN {
 
         [CmdletBinding()]
         param (
-            $WingetPackages
+            [PSObject]$WingetPackages
         )
 
         foreach ($WingetPackage in $WingetPackages) {
@@ -100,6 +82,7 @@ BEGIN {
         if (-not (Test-Path -Path $KeyPath)) {
 
             New-Item `
+                -ItemType RegistryKey `
                 -Path $KeyPath `
                 -Force
 
@@ -116,11 +99,15 @@ BEGIN {
         # if the key exists, just set the value
         # if the value exists, just set it
         if (Get-ItemProperty -Path $KeyPath -Name $ValueName) {
+
             Set-ItemProperty @PathNameValue
+
         } else { # if the value doesn't exist, create it
+
             New-ItemProperty `
                 @PathNameValue `
                 -PropertyType $ValueType
+
         }
 
     }
@@ -140,22 +127,35 @@ BEGIN {
 
 } PROCESS {
 
-    # load config.json to hashtable $params
-    # TODO: PS6 introduced -AsHashtable, so we need newer PS! Need to bootstrap script somehow
-    $params = Get-Content .\config.json | ConvertFrom-Json -AsHashtable
+    # load config.json to PSObject $Configuration
+    $Configuration = Get-Content .\config.json | ConvertFrom-Json
 
-    $WorkingDirectory = $params.WorkingDirectory
+    $WorkingDirectory = $Configuration.WorkingDirectory
 
     # basics
 
-    # if the timezone requested exists, use it
+    # if the timezone requested exists, use it. Otherwise, use EST
+    Write-Host `
+        "Attempting to set system timezone to $($Configuration.TimeZone)"
     Set-TimeZone `
-        -Name $(
-            if (Get-TimeZone $params.Timezone) {$params.Timezome}
-            else {"Eastern Standard Time"}
+        $(
+            if ( (Get-TimeZone $Configuration.TimeZone) ) {
+                
+                Write-Host "Timezone passed validation - setting system timezone to requested $($Configuration.TimeZone)."
+                
+                $Configuration.TimeZone
+
+            } else {
+                
+                Write-Error `
+                    "Timezone $($Configuration.TimeZone) is not valid. Setting system timezone to Eastern Standard Time."
+                
+                'Eastern Standard Time'
+
+            }
         )
 
-    if ($params.MakeRegistryTweaks) {
+    if ($Configuration.MakeRegistryTweaks) {
 
         # TODO: why is the below edit necessary or desired? I forgot.
         # set CLRF=0 in HKCU\Software\Microsoft\Telnet
@@ -282,7 +282,7 @@ BEGIN {
 
         # not sure exactly what thumbnails this affects, but it's in the Performance dialog.
         $DisableThumbnails = @{
-            KeyPath = 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+            KeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
             ValueName = 'IconsOnly'
             ValueType = 'DWORD'
             Value = 1
@@ -290,7 +290,7 @@ BEGIN {
 
         # disables the blue translucent rectangle thingy that's drawn when you select desktop icons
         $DisableTranslucentDesktopSelectionPreview = @{
-            KeyPath = 'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+            KeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
             ValueName = 'ListviewAlphaSelect'
             ValueType = 'DWORD'
             Value = 0
@@ -305,7 +305,7 @@ BEGIN {
         }
 
         # boolean "tweak enabled" parameters to be used to build regkey array
-        $Desired = $params.RegistryTweaks
+        $Desired = $Configuration.RegistryTweaks
 
         # list of splatted parameters to be passed to Set-RegistryValue one at a time
         # prefer config file - if not found, default to 'performance' options
@@ -365,7 +365,11 @@ BEGIN {
             if (-not $Desired.OtherAppearanceOptionsDisabled) {}
             else {$DisableOtherAppearanceOptions}
 
-        )) {Set-RegistryValue @RegistryValue}
+        )) {
+        
+            Set-RegistryValue @RegistryValue
+            
+        }
 
         # kill Explorer (it will restart) to apply changes immediately
         Stop-Process -Name Explorer -Force
@@ -376,9 +380,9 @@ BEGIN {
     # TODO: spawn a script on network adapter change to kill netbios?
     # (Get-WmiObject Win32_NetworkAdapterConfiguration -Filter IpEnabled='true').SetTcpipNetbios(2)
 
-    if ($params.HyperV.Enabled) {
+    if ($Configuration.HyperV.Enabled) {
 
-        $HyperV = $params.HyperV
+        $HyperV = $Configuration.HyperV
         
         Enable-WindowsOptionalFeature `
             -NoRestart `
@@ -437,12 +441,12 @@ BEGIN {
 
     }
 
-    if ($params.Software.InstallSoftware) {
+    if ($Configuration.Software.InstallSoftware) {
 
         Write-Host `
             '+++ Installing applications +++'
         
-        $Scoop = $params.Software.Scoop
+        $Scoop = $Configuration.Software.Scoop
         if ($Scoop.Enabled) {
             
             Write-Host `
@@ -474,11 +478,22 @@ BEGIN {
         }
 
 
-        $Winget = $params.Software.Winget
+        $Winget = $Configuration.Software.Winget
         # Install apps with the winget package manager
         if ($Winget.Enabled) {
             
-            Install-Winget # workaround for 23H2 and older, just try to install it anyway, whatever, idc
+            # we no longer care about 23H2 or older, if Winget is not installed, install it. Otherwise, use it
+            if (-not (Get-Command winget) ) {
+                
+                Write-Host `
+                    'Winget is requested and not currently installed. Installing Winget.'
+
+                Install-Winget
+
+                Write-Host `
+                    'Winget has been installed.'
+
+            }
         
             Write-Host `
                 '+++ Beginning installation of Winget and Windows Store apps. +++'
@@ -486,12 +501,12 @@ BEGIN {
             Install-WingetPackages $Winget.Dependencies.Packages
             
             # remove the Enabled and Dependencies pairs so it's simpler to iterate through
-            $Winget.Remove("Enabled")
-            $Winget.Remove("Dependencies")
+            $Winget.PSObject.Properties.Remove("Enabled")
+            $Winget.PSObject.Properties.Remove("Dependencies")
 
-            foreach ($WingetCategory in $Winget) {
-                if ($WingetCategory.Enabled) {
-                    Install-WingetPackages $WingetCategory.Packages
+            foreach ($Category in $Winget.PSObject.Properties) {
+                if ($Category.Value.Enabled) {
+                    Install-WingetPackages $Category.Value.Packages
                 }
             }
         }
@@ -504,16 +519,20 @@ BEGIN {
     # TODO: clean this up
     dism /online /Enable-Feature /FeatureName:TelnetClient /NoRestart
 
-    # match sn hash in LUT for defined hostname
-    # so I don't have to post serial numbers in public repo (not that it matters)
-    # TODO: this should work, but is untested - 7/25/2024
     if ($RenameComputer) {
 
-        $SerialNumber = Get-Hash `
-            -text (Get-WmiObject win32_bios | Select-Object SerialNumber) `
-            -algorithm SHA256
+        $SerialNumber = (Get-CimInstance win32_bios | Select-Object SerialNumber)
 
-        Rename-Computer $Machines[$SerialNumber]
+        $DesiredHostname = $Machines[$SerialNumber]
+
+        if ($DesiredHostname -and (hostname -ne $DesiredHostname) ) {
+
+            Write-Host `
+                "Computer $($SerialNumber) with hostname $(hostname) does not match desired hostname $($DesiredHostname). Renaming the machine..."
+            
+            Rename-Computer $DesiredHostname
+
+        }
 
     }
 }
