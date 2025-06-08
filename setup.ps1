@@ -425,6 +425,12 @@ BEGIN {
     # TODO: spawn a script on network adapter change to kill netbios?
     # (Get-WmiObject Win32_NetworkAdapterConfiguration -Filter IpEnabled='true').SetTcpipNetbios(2)
 
+    if ($Configuration.Sudo.Enabled) {
+
+        & sudo config --enable normal
+
+    }
+
     if ($Configuration.HyperV.Enabled) {
 
         $HyperV = $Configuration.HyperV
@@ -488,7 +494,11 @@ BEGIN {
 
     if ($Configuration.Telnet.Enabled) {
 
-        Enable-WindowsOptionalFeature -Online -FeatureName "TelnetClient"
+        Enable-WindowsOptionalFeature `
+            -FeatureName 'TelnetClient' `
+            -Online `
+            -NoRestart `
+            -ErrorAction Stop
 
     }
 
@@ -565,6 +575,16 @@ BEGIN {
     } else {
         Write-Host `
             '--- Package installation bypassed ---'
+    }
+
+    if ($Configuration.Git.Enabled) {
+
+        $Git = $Configuration.Git
+
+        & git config --global user.name "$($Git.User.Name)"
+
+        & git config --global user.email "$($Git.User.Email)"
+
     }
 
     if ($RenameComputer) {

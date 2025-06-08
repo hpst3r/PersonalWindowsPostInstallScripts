@@ -2,8 +2,11 @@
     "WorkingDirectory": "$env:TEMP",
     "EncryptDisks": true,
     "InstallDotNet3": true,
-    "EnableHyperV": true,
     "TimeZone": "Eastern Standard Time",
+    "Sudo":
+    {
+        "Enabled": true
+    },
     "HyperV":
     {
         "Enabled": true,
@@ -337,6 +340,15 @@
                     }
                 ]
             }
+        }
+    },
+    "Git":
+    {
+        "Enabled": true,
+        "User":
+        {
+            "Name": "William Porter",
+            "Email": "liam@wporter.org"
         }
     }
 }
