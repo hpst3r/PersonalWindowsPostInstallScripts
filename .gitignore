@@ -1,1 +1,2 @@
 install-docker-ce.ps1
+*.log

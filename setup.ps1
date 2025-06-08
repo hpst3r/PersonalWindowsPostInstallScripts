@@ -130,7 +130,13 @@ BEGIN {
     # load config.json to PSObject $Configuration
     $Configuration = Get-Content .\config.json | ConvertFrom-Json
 
-    $WorkingDirectory = $Configuration.WorkingDirectory
+    Start-Transcript `
+        -Path "setup-$(Get-Date -UFormat %s).log"
+
+    $Stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+
+    Write-Host `
+        "Beginning execution: version $(git rev-parse --short HEAD) at $(Get-Date -UFormat %s)."
 
     # basics
 
@@ -155,7 +161,7 @@ BEGIN {
             }
         )
 
-    if ($Configuration.MakeRegistryTweaks) {
+    if ($Configuration.Registry.MakeChanges) {
 
         # TODO: why is the below edit necessary or desired? I forgot.
         # set CLRF=0 in HKCU\Software\Microsoft\Telnet
@@ -304,8 +310,36 @@ BEGIN {
             Value = [byte[]]@(0x90,0x12,0x03,0x80,0x10,0x00,0x00,0x00)
         }
 
+        $ShowHibernatePowerMenuOption = @{
+            KeyPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings'
+            ValueName = 'ShowHibernateOption'
+            ValueType = 'DWORD'
+            Value = 1
+        }
+
+        $DoNotHideHibernatePowerMenuOption = @{
+            KeyPath = 'HKLM:\SOFTWARE\Microsoft\PolicyManager\default\Start\HideHibernate'
+            ValueName = 'value'
+            ValueType = 'DWORD'
+            Value = 1
+        }
+
+        $ShowHiddenFilesCurrentUser = @{
+            KeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+            ValueName = 'Hidden'
+            ValueType = 'DWORD'
+            Value = 1
+        }
+
+        $ShowFileExtensionsCurrentUser = @{
+            KeyPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+            ValueName = 'HideFileExt'
+            ValueType = 'DWORD'
+            Value = 0
+        }
+
         # boolean "tweak enabled" parameters to be used to build regkey array
-        $Desired = $Configuration.RegistryTweaks
+        $Desired = $Configuration.Registry.Options
 
         # list of splatted parameters to be passed to Set-RegistryValue one at a time
         # prefer config file - if not found, default to 'performance' options
@@ -365,6 +399,15 @@ BEGIN {
             if (-not $Desired.OtherAppearanceOptionsDisabled) {}
             else {$DisableOtherAppearanceOptions}
 
+            if (-not $Desired.ShowHibernatePowerMenuOption) {}
+            else {$ShowHibernatePowerMenuOption, $DoNotHideHibernatePowerMenuOption}
+
+            if (-not $Desired.ShowHiddenFiles) {}
+            else {$ShowHiddenFilesCurrentUser}
+
+            if (-not $Desired.ShowFileExtensions) {}
+            else {$ShowFileExtensionsCurrentUser}
+
         )) {
         
             Set-RegistryValue @RegistryValue
@@ -379,6 +422,12 @@ BEGIN {
     # Windows tweaks: disable Netbios - this will only disable Netbios on adapters that are currently up
     # TODO: spawn a script on network adapter change to kill netbios?
     # (Get-WmiObject Win32_NetworkAdapterConfiguration -Filter IpEnabled='true').SetTcpipNetbios(2)
+
+    if ($Configuration.Sudo.Enabled) {
+
+        & sudo config --enable normal
+
+    }
 
     if ($Configuration.HyperV.Enabled) {
 
@@ -438,6 +487,16 @@ BEGIN {
                 -ErrorAction Stop
 
         }
+
+    }
+
+    if ($Configuration.Telnet.Enabled) {
+
+        Enable-WindowsOptionalFeature `
+            -FeatureName 'TelnetClient' `
+            -Online `
+            -NoRestart `
+            -ErrorAction Stop
 
     }
 
@@ -516,8 +575,15 @@ BEGIN {
             '--- Package installation bypassed ---'
     }
 
-    # TODO: clean this up
-    dism /online /Enable-Feature /FeatureName:TelnetClient /NoRestart
+    if ($Configuration.Git.Enabled) {
+
+        $Git = $Configuration.Git
+
+        git config --global user.name "$($Git.User.Name)"
+
+        & git config --global user.email "$($Git.User.Email)"
+
+    }
 
     if ($RenameComputer) {
 
@@ -537,5 +603,12 @@ BEGIN {
     }
 }
 END {
+
+    Write-Host `
+        "Execution completed successfully at $(Get-Date -UFormat %s) in $($Stopwatch.Elapsed.TotalSeconds) seconds."
+    
+    Stop-Transcript
+
     exit 0
+
 }
