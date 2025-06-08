@@ -13,8 +13,8 @@
         "Config":
         {
             "Modify": true,
-            "FilePath": "D:/hv/vmcfg",
-            "VhdxPath": "D:/hv/vhdx"
+            "FilePath": "C:/hv/vmcfg",
+            "VhdxPath": "C:/hv/vhdx"
         },
         "WindowsSandbox":
         {
