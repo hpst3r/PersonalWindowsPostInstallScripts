@@ -1,5 +1,4 @@
 {
-    "WorkingDirectory": "$env:TEMP",
     "EncryptDisks": true,
     "InstallDotNet3": true,
     "TimeZone": "Eastern Standard Time",
@@ -87,7 +86,6 @@
                 ],
                 "Utilities":
                 [
-                    "sudo",
                     "curl",
                     "grep",
                     "sed",

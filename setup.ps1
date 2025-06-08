@@ -130,10 +130,8 @@ BEGIN {
     # load config.json to PSObject $Configuration
     $Configuration = Get-Content .\config.json | ConvertFrom-Json
 
-    $WorkingDirectory = $Configuration.WorkingDirectory
-
     Start-Transcript `
-        -Path (Join-Path -Path $WorkingDirectory -ChildPath "setup-$(Get-Date -UFormat %s).log")
+        -Path "setup-$(Get-Date -UFormat %s).log"
 
     $Stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
@@ -581,7 +579,7 @@ BEGIN {
 
         $Git = $Configuration.Git
 
-        & git config --global user.name "$($Git.User.Name)"
+        git config --global user.name "$($Git.User.Name)"
 
         & git config --global user.email "$($Git.User.Email)"
 
