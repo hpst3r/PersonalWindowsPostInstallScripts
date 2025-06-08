@@ -24,30 +24,40 @@
             "Distro": "Debian"
         }
     },
-    "MakeRegistryTweaks": true,
-    "RegistryTweaks":
+    "Telnet":
     {
-        "TaskbarSingleMonitor": true,
-        "TaskbarSearchBoxDisabled": true,
-        "TaskbarTaskViewDisabled": true,
-        "TaskbarAlignLeft": true,
-        "NewContextMenuDisabled": true,
-        "LLMNRDisabled": true,
-        "FastStartupDisabled": true,
-        "ShakeToMinimizeDisabled": true,
-        "DnsCacheDisabled": true,
-        "MicrosoftAccountsDisabled": true,
-        "TransparencyDisabled": true,
-        "AnimationsDisabled": true,
-        "FontSmoothingDisabled": false,
-        "RenderWindowsWhileDraggingDisabled": true,
-        "DesktopIconShadowsDisabled": true,
-        "MaximizeMinimizeAnimationsDisabled": true,
-        "TaskbarAnimationsDisabled": true,
-        "AeroPeekDisabled": true,
-        "ThumbnailsDisabled": true,
-        "TranslucentDesktopSelectionDisabled": true,
-        "OtherAppearanceOptionsDisabled": true
+        "Enabled": true
+    },
+    "Registry":
+    {
+        "MakeChanges": true,
+        "Options":
+        {
+            "TaskbarSingleMonitor": true,
+            "TaskbarSearchBoxDisabled": true,
+            "TaskbarTaskViewDisabled": true,
+            "TaskbarAlignLeft": true,
+            "NewContextMenuDisabled": true,
+            "LLMNRDisabled": true,
+            "FastStartupDisabled": true,
+            "ShakeToMinimizeDisabled": true,
+            "DnsCacheDisabled": true,
+            "MicrosoftAccountsDisabled": true,
+            "TransparencyDisabled": true,
+            "AnimationsDisabled": true,
+            "FontSmoothingDisabled": false,
+            "RenderWindowsWhileDraggingDisabled": true,
+            "DesktopIconShadowsDisabled": true,
+            "MaximizeMinimizeAnimationsDisabled": true,
+            "TaskbarAnimationsDisabled": true,
+            "AeroPeekDisabled": true,
+            "ThumbnailsDisabled": true,
+            "TranslucentDesktopSelectionDisabled": true,
+            "OtherAppearanceOptionsDisabled": true,
+            "ShowHibernatePowerMenuOption": true,
+            "ShowHiddenFiles": true,
+            "ShowFileExtensions": true
+        }
     },
     "Software":
     {
@@ -69,7 +79,8 @@
                     "go",
                     "perl",
                     "nodejs",
-                    "java/openjdk"
+                    "java/openjdk",
+                    "perl"
                 ],
                 "Utilities":
                 [
@@ -157,6 +168,10 @@
                     {
                         "PackageFriendlyName": "1Password",
                         "PackageId": "AgileBits.1Password"
+                    },
+                    {
+                        "PackageFriendlyName": "1Password CLI",
+                        "PackageId": "AgileBits.1Password.CLI"
                     }
                 ]
             },
@@ -177,10 +192,6 @@
                         "PackageFriendlyName": "Neovim",
                         "PackageId": "Neovim.Neovim"
                     },
-					{
-						"PackageFriendlyName": "BitSum Process Lasso",
-						"PackageId": "BitSum.ProcessLasso"
-					},
 					{
 						"PackageFriendlyName": "FinalWire Aida64 Extreme",
 						"PackageId": "FinalWire.AIDA64.Extreme"
