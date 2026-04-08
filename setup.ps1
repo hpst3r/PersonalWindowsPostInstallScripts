@@ -28,10 +28,17 @@ BEGIN {
             [PSObject]$WingetPackages
         )
 
+        $PackageCount = 0
+        $TotalPackages = $($WingetPackages.Length)
+
         foreach ($WingetPackage in $WingetPackages) {
+            $PackageCount++
+            
             Write-Host `
-            "+++ Installing package $($WingetPackage.PackageFriendlyName) +++"
+                "+++ Installing package $($WingetPackage.PackageFriendlyName) ($($PackageCount) of $($TotalPackages) in category) +++"
+
             winget install $WingetPackage.PackageId --accept-source-agreements --accept-package-agreements
+
         }
 
     }
@@ -204,14 +211,6 @@ BEGIN {
             ValueName = 'DisallowShaking'
             ValueType = 'DWord'
             Value = 1
-        }
-
-        # enable (2, default) or disable (4) the Windows DNS Client DNS cache
-        $DisableLocalDnsCache = @{
-            KeyPath = 'HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache'
-            ValueName = 'Start'
-            ValueType = 'DWord'
-            Value = 4
         }
 
         # allow (0, default) or disallow (3) Microsoft accounts on this PC
@@ -585,19 +584,15 @@ BEGIN {
 
     }
 
-    if ($RenameComputer) {
+    if ($Configuration.RenameComputer) {
 
-        $SerialNumber = (Get-CimInstance win32_bios | Select-Object SerialNumber)
+        $SerialNumber = (Get-CimInstance win32_bios).SerialNumber
 
-        $DesiredHostname = $Machines[$SerialNumber]
-
-        if ($DesiredHostname -and (hostname -ne $DesiredHostname) ) {
-
+        if (-not ( (& hostname.exe) -eq $SerialNumber ) ) {
             Write-Host `
-                "Computer $($SerialNumber) with hostname $(hostname) does not match desired hostname $($DesiredHostname). Renaming the machine..."
+                "+++ Renaming machine to serial number $($SerialNumber) +++"
             
-            Rename-Computer $DesiredHostname
-
+            Rename-Computer -NewName $SerialNumber
         }
 
     }

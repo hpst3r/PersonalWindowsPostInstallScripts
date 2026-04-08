@@ -3,3 +3,5 @@
 Personal script to prep Windows workstation/VM for use. Installs applications and makes some tweaks to the base system.
 
 I only target the latest LTSC IOT build of Windows. Right now, that means 24H2 LTSC IOT 2024 (build 26100.)
+
+If Hyper-V isn't already installed, run the script once, reboot, then run the script again to install Windows Sandbox and WSL.

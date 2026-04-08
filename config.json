@@ -12,8 +12,8 @@
         "Config":
         {
             "Modify": true,
-            "FilePath": "C:/hv/vmcfg",
-            "VhdxPath": "C:/hv/vhdx"
+            "FilePath": "D:/vmcfg",
+            "VhdxPath": "D:/vhdx"
         },
         "WindowsSandbox":
         {
@@ -30,6 +30,16 @@
     {
         "Enabled": true
     },
+    "Git":
+    {
+        "Enabled": true,
+        "User":
+        {
+            "Name": "William Porter",
+            "Email": "liam@wporter.org"
+        }
+    },
+    "RenameComputer": true,
     "Registry":
     {
         "MakeChanges": true,
@@ -123,7 +133,7 @@
                 "Packages":
                 [
                     {
-                        "PackageFriendlyName": "Spotify Music",
+                        "PackageFriendlyName": "Spotify",
                         "PackageId": "Spotify.Spotify"
                     },
                     {
@@ -146,16 +156,16 @@
                         "PackageFriendlyName": "Google Chrome (Canary)",
                         "PackageId": "Google.Chrome.Canary"
                     },
-					{
-						"PackageFriendlyName": "Brave Browser",
-						"PackageId": "Brave.Brave"
-					},
                     {
                         "PackageFriendlyName": "Microsoft Office (365)",
                         "PackageId": "Microsoft.Office"
                     },
                     {
-                        "PackageFriendlyName": "Obsidian Notes",
+                        "PackageFriendlyName": "Microsoft Teams",
+                        "PackageId": "Microsoft.Teams"
+                    },
+                    {
+                        "PackageFriendlyName": "Obsidian",
                         "PackageId": "Obsidian.Obsidian"
                     },
                     {
@@ -215,7 +225,11 @@
 					{
 						"PackageFriendlyName": "Starship (terminal prompt)",
 						"PackageId": "Starship.Starship"
-					}
+					},
+                    {
+                        "PackageFriendlyName": "NileSoft Shell",
+                        "PackageId": "Nilesoft.Shell"
+                    }
                 ]
             },
             "Tools":
@@ -262,7 +276,37 @@
 					{
 						"PackageFriendlyName": "CrystalDiskInfo",
 						"PackageId": "CrystalDewWorld.CrystalDiskInfo"
-					}
+                    },
+                    {
+                        "PackageFriendlyName": "Terraform",
+                        "PackageId": "HashiCorp.Terraform"
+                    },
+                    {
+                        "PackageFriendlyName": "Azure CLI",
+                        "PackageId": "Microsoft.AzureCLI"
+                    },
+                    {
+                        "PackageFriendlyName": "Azure Storage Explorer",
+                        "PackageId": "Microsoft.Azure.StorageExplorer"
+                    },
+                    {
+                        "PackageFriendlyName": "Azure Storage Emulator",
+                        "PackageId": "Microsoft.Azure.StorageEmulator"
+                    },
+                    {
+                        "PackageFriendlyName": "Hugo",
+                        "PackageId": "Hugo.Hugo"
+                    }
+                ]
+            },
+            "Virtualization":
+            {
+                "Enabled": true,
+                "Packages": [
+                    {
+                        "PackageFriendlyName": "Podman",
+                        "PackageId": "RedHat.Podman"
+                    }
                 ]
             },
             "Networking":
@@ -279,33 +323,21 @@
                     }
                 ]
             },
-            "Virtualization":
+            "VPN Clients":
             {
                 "Enabled": true,
-                "Packages":
-                [
+                "Packages": [
                     {
-                        "PackageFriendlyName": "Hashicorp Vagrant",
-                        "PackageId": "Hashicorp.Vagrant"
+                        "PackageFriendlyName": "Netbird",
+                        "PackageId": "Netbird.Netbird"
                     },
                     {
-                        "PackageFriendlyName": "Hashicorp Terraform",
-                        "PackageId": "Hashicorp.Terraform"
+                        "PackageFriendlyName": "Tailscale",
+                        "PackageId": "Tailscale.Tailscale"
                     },
                     {
-                        "PackageFriendlyName": "Hashicorp Packer",
-                        "PackageId": "Hashicorp.Packer"
-                    }
-                ]
-            },
-            "Cad":
-            {
-                "Enabled": true,
-                "Packages":
-                [
-                    {
-                        "PackageFriendlyName": "UltiMaker Cura",
-                        "PackageId": "UltiMaker.Cura"
+                        "PackageFriendlyName": "OpenVPN Connect",
+                        "PackageId": "OpenVPNTechnologies.OpenVPNConnect"
                     }
                 ]
             },
@@ -338,15 +370,6 @@
                     }
                 ]
             }
-        }
-    },
-    "Git":
-    {
-        "Enabled": true,
-        "User":
-        {
-            "Name": "William Porter",
-            "Email": "liam@wporter.org"
         }
     }
 }
