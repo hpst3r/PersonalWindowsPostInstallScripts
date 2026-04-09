@@ -394,7 +394,7 @@ BEGIN {
             else {$InprocServerOldContextMenu}
 
             if (-not $Desired.DisableLLMNR) {}
-            else {$DNSClientDisableMul ticastResolution}
+            else {$DNSClientDisableMulticastResolution}
             
             if (-not $Desired.DisableNetBIOS) {}
             else {$DisableNetBIOS}

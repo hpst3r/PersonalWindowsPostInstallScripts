@@ -182,6 +182,14 @@
                     {
                         "PackageFriendlyName": "1Password CLI",
                         "PackageId": "AgileBits.1Password.CLI"
+                    },
+                    {
+                        "PackageFriendlyName": "Claude Desktop",
+                        "PackageId": "Anthropic.Claude"
+                    },
+                    {
+                        "PackageFriendlyName": "Claude Code",
+                        "PackageId": "Anthropic.ClaudeCode"
                     }
                 ]
             },
@@ -339,8 +347,8 @@
                 "Enabled": true,
                 "Packages": [
                     {
-                        "PackageFriendlyName": "Netbird",
-                        "PackageId": "Netbird.Netbird"
+                        "PackageFriendlyName": "NetBird",
+                        "PackageId": "NetBird.NetBird"
                     },
                     {
                         "PackageFriendlyName": "Tailscale",
