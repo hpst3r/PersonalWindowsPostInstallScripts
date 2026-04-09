@@ -50,25 +50,28 @@
             "TaskbarTaskViewDisabled": true,
             "TaskbarAlignLeft": true,
             "NewContextMenuDisabled": true,
-            "LLMNRDisabled": true,
+            "DisableLLMNR": true,
+            "DisableMDNS": true,
+            "DisableNetBIOS": true,
             "FastStartupDisabled": true,
             "ShakeToMinimizeDisabled": true,
             "DnsCacheDisabled": true,
             "MicrosoftAccountsDisabled": true,
-            "TransparencyDisabled": true,
-            "AnimationsDisabled": true,
+            "TransparencyDisabled": false,
+            "AnimationsDisabled": false,
             "FontSmoothingDisabled": false,
-            "RenderWindowsWhileDraggingDisabled": true,
-            "DesktopIconShadowsDisabled": true,
-            "MaximizeMinimizeAnimationsDisabled": true,
-            "TaskbarAnimationsDisabled": true,
+            "RenderWindowsWhileDraggingDisabled": false,
+            "DesktopIconShadowsDisabled": false,
+            "MaximizeMinimizeAnimationsDisabled": false,
+            "TaskbarAnimationsDisabled": false,
             "AeroPeekDisabled": true,
             "ThumbnailsDisabled": true,
-            "TranslucentDesktopSelectionDisabled": true,
-            "OtherAppearanceOptionsDisabled": true,
+            "TranslucentDesktopSelectionDisabled": false,
+            "OtherAppearanceOptionsDisabled": false,
             "ShowHibernatePowerMenuOption": true,
             "ShowHiddenFiles": true,
-            "ShowFileExtensions": true
+            "ShowFileExtensions": true,
+            "AlwaysPromptForElevation": true
         }
     },
     "Software":
@@ -161,10 +164,6 @@
                         "PackageId": "Microsoft.Office"
                     },
                     {
-                        "PackageFriendlyName": "Microsoft Teams",
-                        "PackageId": "Microsoft.Teams"
-                    },
-                    {
                         "PackageFriendlyName": "Obsidian",
                         "PackageId": "Obsidian.Obsidian"
                     },
@@ -229,6 +228,10 @@
                     {
                         "PackageFriendlyName": "NileSoft Shell",
                         "PackageId": "Nilesoft.Shell"
+                    },
+                    {
+						"PackageFriendlyName": "CrystalDiskInfo",
+						"PackageId": "CrystalDewWorld.CrystalDiskInfo"
                     }
                 ]
             },
@@ -262,25 +265,27 @@
                         "PackageId": "Microsoft.WinDbg"
                     },
                     {
-                        "PackageFriendlyName": "Nlite",
-                        "PackageId": "Nlitesoft.Nlite"
-                    },
-                    {
-                        "PackageFriendlyName": "SyncTrayzor (Syncthing utility)",
-                        "PackageId": "SyncTrayzor.SyncTrayzor"
-                    },
-                    {
                         "PackageFriendlyName": "PuTTY",
                         "PackageId": "PuTTY.PuTTY"
-                    },
-					{
-						"PackageFriendlyName": "CrystalDiskInfo",
-						"PackageId": "CrystalDewWorld.CrystalDiskInfo"
                     },
                     {
                         "PackageFriendlyName": "Terraform",
                         "PackageId": "HashiCorp.Terraform"
                     },
+                    {
+                        "PackageFriendlyName": "Hugo",
+                        "PackageId": "Hugo.Hugo"
+                    },
+                    {
+                        "PackageFriendlyName": "Bat",
+                        "PackageId": "sharkdp.bat"
+                    }
+                ]
+            },
+            "Azure":
+            {
+                "Enabled": true,
+                "Packages": [
                     {
                         "PackageFriendlyName": "Azure CLI",
                         "PackageId": "Microsoft.AzureCLI"
@@ -292,10 +297,16 @@
                     {
                         "PackageFriendlyName": "Azure Storage Emulator",
                         "PackageId": "Microsoft.Azure.StorageEmulator"
-                    },
+                    }
+                ]
+            },
+            "Garbage":
+            {
+                "Enabled": true,
+                "Packages": [
                     {
-                        "PackageFriendlyName": "Hugo",
-                        "PackageId": "Hugo.Hugo"
+                        "PackageFriendlyName": "Microsoft Teams",
+                        "PackageId": "Microsoft.Teams"
                     }
                 ]
             },

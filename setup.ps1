@@ -337,6 +337,31 @@ BEGIN {
             Value = 0
         }
 
+        $DisableNetBIOS = @{
+            KeyPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient'
+            ValueName = 'EnableNetbios'
+            ValueType = 'DWORD'
+            Value = 0
+        }
+
+        $DisableMDNS = @{
+            KeyPath = 'HKLM:\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters'
+            ValueName = 'EnableMDNS'
+            ValueType = 'DWORD'
+            Value = 0
+        }
+
+        # default = 5
+        # default = prompt for non-Microsoft binaries.
+        # This allows adversaries to elevate to admin by replacing trusted
+        # binaries (e.g., devmgmt.msc) with, e.g., PowerShell.
+        $AlwaysPromptForElevation = @{
+            KeyPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System'
+            ValueName = 'ConsentPromptBehaviorAdmin'
+            ValueType = 'DWORD'
+            Value = 2 # prompt for consent on secure desktop
+        }
+
         # boolean "tweak enabled" parameters to be used to build regkey array
         $Desired = $Configuration.Registry.Options
 
@@ -368,8 +393,14 @@ BEGIN {
             if (-not $Desired.$NewContextMenuDisabled) {}
             else {$InprocServerOldContextMenu}
 
-            if (-not $Desired.LLMNRDisabled) {}
-            else {$DNSClientDisableMulticastResolution}
+            if (-not $Desired.DisableLLMNR) {}
+            else {$DNSClientDisableMul ticastResolution}
+            
+            if (-not $Desired.DisableNetBIOS) {}
+            else {$DisableNetBIOS}
+
+            if (-not $Desired.DisableMDNS) {}
+            else {$DisableMDNS}
 
             if (-not $Desired.RenderWindowsWhileDraggingDisabled) {}
             else {$DisableRenderWindowsWhileDragging}
@@ -406,6 +437,9 @@ BEGIN {
 
             if (-not $Desired.ShowFileExtensions) {}
             else {$ShowFileExtensionsCurrentUser}
+
+            if (-not $Desired.AlwaysPromptForElevation) {}
+            else {$AlwaysPromptForElevation}
 
         )) {
         
