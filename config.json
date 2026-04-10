@@ -71,7 +71,8 @@
             "ShowHibernatePowerMenuOption": true,
             "ShowHiddenFiles": true,
             "ShowFileExtensions": true,
-            "AlwaysPromptForElevation": true
+            "AlwaysPromptForElevation": true,
+            "WindowsUpdateDisableDriverUpdates": true
         }
     },
     "Software":

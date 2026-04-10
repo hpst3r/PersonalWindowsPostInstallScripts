@@ -362,6 +362,22 @@ BEGIN {
             Value = 2 # prompt for consent on secure desktop
         }
 
+        $WindowsUpdate_ExcludeWUDriversInQualityUpdate = @{
+            KeyPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate'
+            ValueName = 'ExcludeWUDriversInQualityUpdate'
+            ValueType = 'DWORD'
+            Value = 1
+        }
+
+        $UXSettings_ExcludeWUDriversInQualityUpdate = @{
+            KeyPath = 'HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings'
+            ValueName = 'ExcludeWUDriversInQualityUpdate'
+            ValueType = 'DWORD'
+            Value = 1
+        }
+
+
+
         # boolean "tweak enabled" parameters to be used to build regkey array
         $Desired = $Configuration.Registry.Options
 
@@ -440,6 +456,9 @@ BEGIN {
 
             if (-not $Desired.AlwaysPromptForElevation) {}
             else {$AlwaysPromptForElevation}
+
+            if (-not $Desired.WindowsUpdateDisableDriverUpdates) {}
+            else {$WindowsUpdate_ExcludeWUDriversInQualityUpdate, $UXSettings_ExcludeWUDriversInQualityUpdate}
 
         )) {
         
