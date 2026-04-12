@@ -320,7 +320,7 @@ BEGIN {
             KeyPath = 'HKLM:\SOFTWARE\Microsoft\PolicyManager\default\Start\HideHibernate'
             ValueName = 'value'
             ValueType = 'DWORD'
-            Value = 1
+            Value = 0
         }
 
         $ShowHiddenFilesCurrentUser = @{
