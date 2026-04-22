@@ -212,7 +212,7 @@
                         "PackageId": "Neovim.Neovim"
                     },
 					{
-						"PackageFriendlyName": "FinalWire Aida64 Extreme",
+						"PackageFriendlyName": "Aida64 Extreme",
 						"PackageId": "FinalWire.AIDA64.Extreme"
 					}
                 ]
@@ -245,6 +245,10 @@
                     {
                         "PackageFriendlyName": "Fastfetch",
                         "PackageId": "Fastfetch-cli.Fastfetch"
+                    },
+                    {
+                        "PackageFriendlyName": "Anki (flashcards)",
+                        "PackageId": "Anki.Anki"
                     }
                 ]
             },
@@ -290,8 +294,8 @@
                         "PackageId": "Hugo.Hugo"
                     },
                     {
-                        "PackageFriendlyName": "Bat",
-                        "PackageId": "sharkdp.bat"
+                        "PackageFriendlyName": "ShareX",
+                        "PackageId": "ShareX.ShareX"
                     }
                 ]
             },
